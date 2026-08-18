@@ -1,0 +1,10 @@
+{
+  "name": "Huyền Các",
+  "short_name": "Huyền Các",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#090d14",
+  "theme_color": "#0d1320",
+  "lang": "vi",
+  "description": "Tarot, Thần số học, Tử vi và Xem ngày — kiến trúc module."
+}

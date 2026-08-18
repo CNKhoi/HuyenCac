@@ -1,0 +1,13 @@
+/* TAROT VISUALS */
+.tarot-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:16px;perspective:1200px}.tarot-grid.auto{grid-template-columns:repeat(3,minmax(0,1fr))}
+.tarot-reading{opacity:1;transform-style:preserve-3d}.tarot-position{text-align:center;font-size:8px;letter-spacing:.14em;color:#a69bb7;font-weight:800;margin-bottom:8px}
+.tarot-card-shell{position:relative;aspect-ratio:5/8;border-radius:18px;padding:8px;background:linear-gradient(145deg,rgba(241,217,154,.78),rgba(157,125,69,.4));box-shadow:0 22px 60px rgba(0,0,0,.24);transform-style:preserve-3d;transition:transform .22s ease,box-shadow .22s ease}
+.tarot-card-shell:hover{box-shadow:0 28px 70px rgba(0,0,0,.32),0 0 28px rgba(var(--accent-rgb),.11)}
+.tarot-card-face{position:relative;height:100%;border-radius:13px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;overflow:hidden;background:
+  radial-gradient(circle at var(--mx,50%) var(--my,22%),rgba(var(--accent-rgb),.15),transparent 34%),
+  linear-gradient(160deg,#171c27,#0d131d 68%);border:1px solid rgba(241,217,154,.18)}
+.tarot-card-face::before{content:"";position:absolute;inset:9px;border:1px solid rgba(209,175,111,.18);border-radius:10px}
+.tarot-card-face::after{content:"";position:absolute;width:120px;height:120px;border:1px solid rgba(209,175,111,.12);border-radius:50%;box-shadow:0 0 0 18px rgba(209,175,111,.025),0 0 0 36px rgba(209,175,111,.018)}
+.card-roman,.card-sigil,.card-name,.card-state{position:relative;z-index:2}.card-roman{font-family:Cinzel,serif;color:var(--gold);font-size:10px}.card-sigil{margin:16px 0;color:var(--gold-2);filter:drop-shadow(0 0 14px rgba(209,175,111,.12))}.card-name{font-family:"Playfair Display",serif;font-size:19px;max-width:80%;line-height:1.16}.card-state{font-size:8px;color:#b59a67;margin-top:8px;font-weight:800;letter-spacing:.11em}.tarot-card-face.reversed .card-sigil{transform:rotate(180deg)}
+.tarot-meaning{padding:11px 3px 2px}.tarot-meaning strong{font-size:11px}.tarot-meaning p{font-size:10px;color:var(--text-2);line-height:1.68;margin-top:5px}
+.tarot-grid.dealing .tarot-reading{opacity:0;transform:translateY(30px) scale(.96)}.tarot-grid.dealing .tarot-reading.dealt{animation:deal .78s var(--ease) forwards}@keyframes deal{0%{opacity:0;transform:translateY(32px) rotateX(10deg) scale(.95)}55%{opacity:1;transform:translateY(-4px) scale(1.01)}100%{opacity:1;transform:none}}

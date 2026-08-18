@@ -1,291 +1,181 @@
 <!doctype html>
 <html lang="vi">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="theme-color" content="#f8f6fc">
-  <meta name="description" content="Huyền Các — Tarot, thần số học, tử vi và tra ngày phù hợp với giao diện đơn giản, dễ hiểu.">
-  <title>Huyền Các v3.3 — Dễ xem, dễ hiểu</title>
-  <link rel="stylesheet" href="styles.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0d1320">
+<meta name="description" content="Huyền Các — Tarot, Thần số học, Tử vi và Xem ngày với trải nghiệm Modern Mysticism cao cấp.">
+<title>Huyền Các v5.1 — Modular Architecture</title>
+
+<link rel="stylesheet" href="assets/css/tokens.css">
+<link rel="stylesheet" href="assets/css/components.css">
+<link rel="stylesheet" href="assets/css/layout.css">
+<link rel="stylesheet" href="assets/css/features/home.css">
+<link rel="stylesheet" href="assets/css/features/shared.css">
+<link rel="stylesheet" href="assets/css/features/tarot.css">
+<link rel="stylesheet" href="assets/css/features/numerology.css">
+<link rel="stylesheet" href="assets/css/features/horoscope.css">
+<link rel="stylesheet" href="assets/css/features/dates.css">
+<link rel="stylesheet" href="assets/css/motion.css">
+<link rel="stylesheet" href="assets/css/responsive.css">
+<link rel="manifest" href="manifest.webmanifest">
 </head>
-<body>
-  <header class="topbar">
-    <a class="brand" href="#" data-view-jump="home">
-      <span class="brand-seal">✦</span>
-      <span><strong>HUYỀN CÁC</strong><small>Tarot • Bói • Tử vi • Ngày phù hợp</small></span>
-    </a>
-    <nav class="nav" aria-label="Chức năng chính">
-      <button class="nav-link active" data-view="home">Trang chủ</button>
-      <button class="nav-link" data-view="tarot">Tarot</button>
-      <button class="nav-link" data-view="fortune">Xem bói</button>
-      <button class="nav-link" data-view="horoscope">Tử vi</button>
-      <button class="nav-link" data-view="dates">Xem ngày</button>
-    </nav>
-    <button class="profile-chip" id="profileChip">
-      <span class="avatar" id="profileAvatar">?</span>
-      <span><strong id="profileNameTop">Chưa có hồ sơ</strong><small id="profileMetaTop">Bấm để nhập thông tin</small></span>
-      <b>›</b>
-    </button>
-  </header>
+<body data-view="home">
 
-  <main class="shell">
-    <!-- HOME -->
-    <section class="view active" id="view-home">
-      <section class="welcome-card panel">
-        <div class="welcome-copy">
-          <span class="eyebrow">BẮT ĐẦU RẤT ĐƠN GIẢN</span>
-          <h1>Bạn muốn xem điều gì hôm nay?</h1>
-          <p>Chỉ cần tạo một hồ sơ gồm họ tên và ngày sinh. Sau đó chọn đúng nhu cầu bên dưới — mỗi chức năng đều có hướng dẫn từng bước, không cần biết trước thuật ngữ Tarot hay tử vi.</p>
-          <div class="welcome-actions">
-            <button class="btn primary" data-go="profile">1. Tạo hồ sơ của tôi</button>
-            <span>→</span>
-            <b>2. Chọn một chức năng bên dưới</b>
-          </div>
-        </div>
-        <div class="quick-profile">
-          <div class="quick-profile-head"><span>HỒ SƠ ĐANG DÙNG</span><span class="status-pill">Lưu trên máy</span></div>
-          <div class="quick-profile-main">
-            <div class="sigil" id="homeSigil">✦</div>
-            <div><small id="homeDateLabel">CHƯA CÓ DỮ LIỆU</small><strong id="homeName">Tạo hồ sơ để bắt đầu</strong><p id="homeSummary">Bạn chỉ cần nhập một lần, các chức năng sẽ dùng chung thông tin.</p></div>
-          </div>
-          <div class="quick-stats">
-            <div><small>Số chủ đạo</small><strong id="homeLife">—</strong></div>
-            <div><small>Tuổi Can Chi</small><strong id="homeYearPillar">—</strong></div>
-            <div><small>Ngày âm sinh</small><strong id="homeLunar">—</strong></div>
-            <div><small>Cung hoàng đạo</small><strong id="homeZodiac">—</strong></div>
-          </div>
-        </div>
-      </section>
+<!-- =======================================================
+     SVG ICON SPRITE — unified sigil-style iconography
+     ======================================================= -->
+<svg width="0" height="0" style="position:absolute;overflow:hidden" aria-hidden="true">
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M4 11.5 12 4l8 7.5v8a1 1 0 0 1-1 1h-5v-6h-4v6H5a1 1 0 0 1-1-1z"/></symbol>
+  <symbol id="i-tarot" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M12 7v2M12 15v2M7 12h2M15 12h2M8.7 8.7l1.4 1.4M13.9 13.9l1.4 1.4M15.3 8.7l-1.4 1.4M10.1 13.9l-1.4 1.4"/></symbol>
+  <symbol id="i-number" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v8M8 12h8M6.8 6.8l10.4 10.4M17.2 6.8 6.8 17.2"/></symbol>
+  <symbol id="i-horoscope" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 4c2.6 2.2 4 4.9 4 8s-1.4 5.8-4 8c-2.6-2.2-4-4.9-4-8s1.4-5.8 4-8Z"/><path d="M4 12h16"/></symbol>
+  <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 9h18M8 13h3M13 13h3M8 17h3"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4.5 20c.8-4 3.2-6 7.5-6s6.7 2 7.5 6"/></symbol>
+  <symbol id="i-star" viewBox="0 0 24 24"><path d="m12 3 1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="m19 3 .7 2.3L22 6l-2.3.7L19 9l-.7-2.3L16 6l2.3-.7z"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M19 15.5A8 8 0 0 1 8.5 5a8 8 0 1 0 10.5 10.5Z"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M14 7l5 5-5 5"/></symbol>
+  <symbol id="i-compass" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2.2 4.8-4.8 2.2 2.2-4.8z"/></symbol>
+</svg>
 
-      <section class="choice-section">
-        <div class="section-title-simple">
-          <span class="step-dot">2</span>
-          <div><h2>Chọn chức năng bạn muốn xem</h2><p>Mỗi ô dưới đây trả lời một nhu cầu khác nhau.</p></div>
-        </div>
-        <div class="choice-grid">
-          <button class="choice-card" data-view-jump="tarot">
-            <span class="choice-icon">🃏</span>
-            <span class="choice-body"><strong>Xem Tarot</strong><small>Dùng khi bạn muốn nhìn lại tình cảm, công việc, tài chính hoặc xem toàn cảnh hiện tại.</small></span>
-            <span class="choice-action">Bắt đầu →</span>
-          </button>
-          <button class="choice-card" data-view-jump="fortune">
-            <span class="choice-icon">◉</span>
-            <span class="choice-body"><strong>Xem bói cá nhân</strong><small>Dùng họ tên + ngày sinh để xem các chỉ số thần số học và phần diễn giải cá nhân.</small></span>
-            <span class="choice-action">Xem chỉ số →</span>
-          </button>
-          <button class="choice-card" data-view-jump="horoscope">
-            <span class="choice-icon">☯</span>
-            <span class="choice-body"><strong>Xem tử vi tổng quan</strong><small>Xem Can Chi, ngày âm, Tam hợp, đối xung, cung phi Nam/Nữ và cung hoàng đạo.</small></span>
-            <span class="choice-action">Xem tử vi →</span>
-          </button>
-          <button class="choice-card" data-view-jump="dates">
-            <span class="choice-icon">📅</span>
-            <span class="choice-body"><strong>Tìm ngày phù hợp</strong><small>Chọn việc cần làm và khoảng ngày; hệ thống xếp hạng rồi giải thích vì sao.</small></span>
-            <span class="choice-action">Tìm ngày →</span>
-          </button>
-        </div>
-      </section>
+<header class="topbar" id="topbar">
+  <a class="brand" href="#" data-action="view" data-view="home">
+    <span class="brand-sigil"><svg class="icon icon-lg"><use href="#i-star"/></svg></span>
+    <span><strong>HUYỀN CÁC</strong><small>Modern Mysticism • Personal Insight</small></span>
+  </a>
+  <nav class="nav" aria-label="Chức năng">
+    <button class="nav-link active" data-action="view" data-view="home">Trang chủ</button>
+    <button class="nav-link" data-action="view" data-view="tarot">Tarot</button>
+    <button class="nav-link" data-action="view" data-view="fortune">Xem bói</button>
+    <button class="nav-link" data-action="view" data-view="horoscope">Tử vi</button>
+    <button class="nav-link" data-action="view" data-view="dates">Xem ngày</button>
+  </nav>
+  <button class="profile-chip" data-action="profile-open">
+    <span class="avatar" id="profileAvatar">?</span>
+    <span><strong id="profileNameTop">Chưa có hồ sơ</strong><small id="profileMetaTop">Thiết lập để cá nhân hóa</small></span>
+  </button>
+</header>
 
-      <section class="simple-how panel">
-        <div><span class="eyebrow">CÁCH ĐỌC KẾT QUẢ</span><h2>Chúng tôi tách “kết quả chính” và “chi tiết”.</h2></div>
-        <div class="how-grid">
-          <div><span>01</span><strong>Xem kết luận trước</strong><p>Thông tin quan trọng nhất luôn nằm ở đầu trang.</p></div>
-          <div><span>02</span><strong>Đọc giải thích</strong><p>Mỗi kết quả có phần nói rõ nó có nghĩa gì.</p></div>
-          <div><span>03</span><strong>Mở nâng cao khi cần</strong><p>Công thức và thuật ngữ kỹ thuật được thu gọn, không làm rối màn hình.</p></div>
+<main class="shell">
+  <!-- HOME -->
+  <section class="view active" id="view-home">
+    <section class="hero panel panel-accent reveal">
+      <div class="hero-copy">
+        <span class="eyebrow">Không gian chiêm nghiệm cá nhân</span>
+        <h1>Một hồ sơ.<br>Nhiều lớp góc nhìn.</h1>
+        <p>Tarot, Thần số học, Can Chi, Cung phi và tra ngày được tổ chức thành một trải nghiệm thống nhất — ưu tiên kết quả dễ hiểu trước, chi tiết chuyên sâu sau.</p>
+        <div class="hero-actions">
+          <button class="btn primary" data-action="profile-open"><svg class="icon" style="display:inline-block;vertical-align:-5px;margin-right:6px"><use href="#i-user"/></svg>Tạo hồ sơ cá nhân</button>
+          <button class="btn secondary" data-action="view" data-view="tarot">Khám phá Tarot</button>
         </div>
-      </section>
-    </section>
-
-    <!-- TAROT -->
-    <section class="view" id="view-tarot">
-      <div class="page-title simple-page-title">
-        <div><span class="eyebrow">TAROT</span><h1>Bạn muốn xem Tarot theo cách nào?</h1><p>Nếu không biết nên hỏi gì, hãy chọn <strong>Auto toàn cảnh</strong>. Đây là cách đơn giản nhất.</p></div>
-        <button class="btn secondary" data-go="profile">Thông tin của tôi</button>
       </div>
-
-      <div class="guided-layout">
-        <aside class="guide-card panel">
-          <div class="guide-heading"><span class="step-dot">1</span><div><strong>Chọn cách xem</strong><small>Bạn chỉ cần chọn 1 chế độ.</small></div></div>
-          <label class="field"><span>Cách xem Tarot</span>
-            <select id="tarotMode">
-              <option value="auto">Auto toàn cảnh — dễ dùng nhất</option>
-              <option value="open">Không cần câu hỏi — chọn một chủ đề</option>
-              <option value="preset">Chọn câu hỏi có sẵn</option>
-              <option value="custom">Tôi muốn tự đặt câu hỏi</option>
-            </select>
-          </label>
-          <label class="field" id="tarotTopicField"><span>Bạn muốn xem về</span>
-            <select id="tarotTopic">
-              <option value="general">Tổng quan</option><option value="love">Tình cảm</option><option value="work">Công việc</option>
-              <option value="finance">Tài chính</option><option value="study">Học tập & phát triển</option><option value="decision">Một quyết định quan trọng</option>
-            </select>
-          </label>
-          <label class="field hidden" id="tarotPresetField"><span>Chọn câu hỏi gần với bạn nhất</span><select id="tarotPresetQuestion"></select></label>
-          <label class="field hidden" id="tarotQuestionField"><span>Nhập câu hỏi của bạn</span><textarea id="tarotQuestion" rows="5" placeholder="Ví dụ: Tôi nên ưu tiên điều gì trong công việc 3 tháng tới?"></textarea></label>
-          <div class="plain-help" id="tarotModeInfo"></div>
-          <button class="btn primary full big-action" id="drawTarotBtn">2. Xem kết quả Tarot</button>
-          <button class="text-button" id="resetTarotBtn">Xóa kết quả và xem lại</button>
-        </aside>
-
-        <div class="main-result-column">
-          <section class="panel result-panel clean-result">
-            <div class="empty-state" id="tarotEmpty"><div class="empty-orb">☾</div><h3>Kết quả sẽ xuất hiện ở đây</h3><p>Chọn cách xem ở bên trái rồi bấm “Xem kết quả Tarot”.</p></div>
-            <div class="hidden" id="tarotResult">
-              <div class="result-heading-simple">
-                <div><span class="eyebrow" id="tarotSpreadLabel">TRẢI BÀI</span><h2 id="tarotResultQuestion"></h2></div>
-                <div class="session-code"><small>Mã kết quả</small><strong id="tarotSessionCode">—</strong></div>
-              </div>
-              <div class="spread-context" id="tarotContext"></div>
-              <div class="tarot-grid" id="tarotGrid"></div>
-            </div>
-          </section>
-
-          <section class="panel analysis-panel hidden" id="tarotDeepPanel">
-            <div class="section-mini-head"><div><span class="eyebrow">KẾT LUẬN DỄ HIỂU</span><h3 id="tarotAnalysisTitle">Điều đáng chú ý nhất</h3></div><span class="badge" id="tarotAnalysisBadge">Kết quả</span></div>
-            <div class="deep-grid"><div class="analysis-copy" id="tarotSummary"></div><div class="action-card"><small>BẠN CÓ THỂ LÀM GÌ TIẾP?</small><ol id="tarotActions"></ol></div></div>
-          </section>
+      <div class="quick-profile">
+        <div class="quick-profile-head"><span>HỒ SƠ ĐANG DÙNG</span><span class="chip"><i></i>Lưu trên thiết bị</span></div>
+        <div class="quick-profile-core">
+          <div class="orb"><svg class="icon icon-xl"><use href="#i-star"/></svg></div>
+          <div><small id="homeDateLabel">CHƯA CÓ DỮ LIỆU</small><strong id="homeName">Tạo hồ sơ để bắt đầu</strong><p id="homeSummary">Thông tin được dùng chung cho tất cả chức năng.</p></div>
+        </div>
+        <div class="quick-stats">
+          <div><small>Số chủ đạo</small><strong id="homeLife">—</strong></div>
+          <div><small>Tuổi Can Chi</small><strong id="homeYearPillar">—</strong></div>
+          <div><small>Ngày âm sinh</small><strong id="homeLunar">—</strong></div>
+          <div><small>Cung hoàng đạo</small><strong id="homeZodiac">—</strong></div>
         </div>
       </div>
     </section>
 
-    <!-- NUMEROLOGY -->
-    <section class="view" id="view-fortune">
-      <div class="page-title simple-page-title">
-        <div><span class="eyebrow">XEM BÓI CÁ NHÂN</span><h1>Đọc phần tổng hợp trước, chỉ số chi tiết xem sau.</h1><p>Phần này dùng họ tên và ngày sinh. Bạn không cần hiểu “số linh hồn”, “số biểu đạt” trước khi sử dụng.</p></div>
-        <button class="btn secondary" data-go="profile">Thông tin của tôi</button>
+    <section class="feature-section reveal">
+      <div class="feature-heading"><div><span class="eyebrow">Bốn trải nghiệm chính</span><h2>Bạn muốn xem điều gì?</h2></div><p>Mỗi chức năng có một ngôn ngữ giao diện riêng, nhưng cùng dùng chung hồ sơ để giảm thao tác lặp lại.</p></div>
+      <div class="feature-grid">
+        <button class="feature-card" style="--card-rgb:154,130,208" data-action="view" data-view="tarot"><span class="feature-icon"><svg class="icon icon-lg"><use href="#i-tarot"/></svg></span><small>TRẢI BÀI</small><strong>Tarot</strong><p>Auto toàn cảnh hoặc 3 lá theo chủ đề/câu hỏi. Cùng dữ liệu cho kết quả ổn định trong ngày.</p><b>Xem Tarot →</b></button>
+        <button class="feature-card" style="--card-rgb:99,165,149" data-action="view" data-view="fortune"><span class="feature-icon"><svg class="icon icon-lg"><use href="#i-number"/></svg></span><small>THẦN SỐ HỌC</small><strong>Xem bói cá nhân</strong><p>Chân dung tổng hợp, 8 chỉ số, nhịp năm/tháng/ngày và lớp diễn giải theo hồ sơ.</p><b>Xem chỉ số →</b></button>
+        <button class="feature-card" style="--card-rgb:209,175,111" data-action="view" data-view="horoscope"><span class="feature-icon"><svg class="icon icon-lg"><use href="#i-horoscope"/></svg></span><small>CAN CHI</small><strong>Tử vi tổng quan</strong><p>Ngày âm, Can Chi, Tam hợp, Lục hợp, Đối xung, Cung phi Nam/Nữ và Ngũ hành.</p><b>Xem tử vi →</b></button>
+        <button class="feature-card" style="--card-rgb:109,148,190" data-action="view" data-view="dates"><span class="feature-icon"><svg class="icon icon-lg"><use href="#i-calendar"/></svg></span><small>TRA NGÀY</small><strong>Ngày phù hợp</strong><p>Xếp hạng theo mục đích, tuổi và các tiêu chí minh bạch; xem rõ từng điểm cộng/trừ.</p><b>Tra ngày →</b></button>
       </div>
+    </section>
+  </section>
 
-      <section class="panel primary-reading-card">
-        <div class="section-mini-head"><div><span class="eyebrow">KẾT QUẢ CHÍNH</span><h3>Chân dung tổng hợp</h3></div><span class="badge">Nên đọc trước</span></div>
-        <div class="reading large-reading" id="numerologyReading">Tạo hồ sơ để xem phân tích.</div>
-      </section>
-
-      <div class="two-col friendly-cols">
-        <section class="panel padded">
-          <div class="section-mini-head"><div><span class="eyebrow">NHỊP HIỆN TẠI</span><h3>Năm • tháng • ngày cá nhân</h3></div><span class="badge" id="currentDateBadge">—</span></div>
-          <div class="cycle-stack" id="cycleStack"></div>
+  <!-- TAROT -->
+  <section class="view" id="view-tarot">
+    <section class="page-hero panel panel-accent reveal">
+      <div><span class="eyebrow">Tarot • Trực giác có cấu trúc</span><h1>Bạn muốn xem Tarot theo cách nào?</h1><p>Không bắt buộc phải đặt câu hỏi. Auto toàn cảnh đọc sáu vùng đời sống; ba chế độ còn lại cho phép xem không câu hỏi, chọn câu hỏi gợi ý hoặc tự đặt câu hỏi.</p><div class="hero-chips"><span class="chip"><i></i>Auto 6 lá</span><span class="chip"><i></i>3 lá theo ngữ cảnh</span><span class="chip"><i></i>Mã trải bài ổn định</span></div></div>
+      <button class="btn secondary" data-action="profile-open">Thông tin của tôi</button>
+    </section>
+    <section class="logic-strip panel reveal"><article class="logic-step"><span>1</span><div><strong>Chọn cách xem</strong><p>Auto là lựa chọn dễ nhất.</p></div></article><article class="logic-step"><span>2</span><div><strong>Rút bài ổn định</strong><p>Cùng dữ liệu trong ngày → cùng trải bài.</p></div></article><article class="logic-step"><span>3</span><div><strong>Đọc kết luận</strong><p>Đối chiếu thông điệp với dữ kiện thực tế.</p></div></article></section>
+    <div class="guided-layout">
+      <aside class="guide-card panel panel-accent reveal">
+        <div class="guide-title"><span class="brand-sigil"><svg class="icon"><use href="#i-tarot"/></svg></span><div><strong>Thiết lập trải bài</strong><small>Chỉ cần chọn một chế độ.</small></div></div>
+        <label class="form-field"><span>Cách xem Tarot</span><select id="tarotMode"><option value="auto">Auto toàn cảnh — 6 lá</option><option value="open">Không cần câu hỏi — 3 lá</option><option value="preset">Chọn câu hỏi có sẵn — 3 lá</option><option value="custom">Tự đặt câu hỏi — 3 lá</option></select></label>
+        <label class="form-field" id="tarotTopicField"><span>Chủ đề</span><select id="tarotTopic"><option value="general">Tổng quan</option><option value="love">Tình cảm</option><option value="work">Công việc</option><option value="finance">Tài chính</option><option value="study">Học tập & phát triển</option><option value="decision">Quyết định quan trọng</option></select></label>
+        <label class="form-field hidden" id="tarotPresetField"><span>Câu hỏi gợi ý</span><select id="tarotPresetQuestion"></select></label>
+        <label class="form-field hidden" id="tarotQuestionField"><span>Câu hỏi của bạn</span><textarea id="tarotQuestion" placeholder="Ví dụ: Tôi nên ưu tiên điều gì trong công việc 3 tháng tới?"></textarea></label>
+        <div class="notice" id="tarotModeInfo"></div>
+        <button class="btn primary full" data-action="tarot-draw">Rút bài & xem kết quả</button>
+        <button class="text-button full" data-action="tarot-reset">Xóa kết quả và xem lại</button>
+      </aside>
+      <div class="result-stack">
+        <section class="result-panel panel panel-accent reveal" id="tarotResultPanel">
+          <div class="empty-state" id="tarotEmpty"><div class="orb"><svg class="icon icon-xl"><use href="#i-moon"/></svg></div><h3>Kết quả sẽ xuất hiện ở đây</h3><p>Chọn cách xem bên trái và bấm “Rút bài & xem kết quả”.</p></div>
+          <div id="tarotResult" class="hidden"><div class="result-head"><div><span class="eyebrow" id="tarotSpreadLabel">TRẢI BÀI</span><h3 id="tarotResultQuestion"></h3></div><div class="session-code"><small>MÃ TRẢI BÀI</small><strong id="tarotSessionCode">—</strong></div></div><div class="context-row" id="tarotContext"></div><div class="tarot-grid" id="tarotGrid"></div></div>
         </section>
-        <section class="panel padded gender-panel" id="numerologyGenderPanel">
-          <div class="section-mini-head"><div><span class="eyebrow">PHÂN TÍCH THEO HỒ SƠ</span><h3 id="numerologyGenderTitle">Nam/Nữ</h3></div><span class="badge" id="numerologyGenderBadge">Hồ sơ</span></div>
-          <div class="reading" id="numerologyGenderReading">Chọn giới tính trong hồ sơ để bổ sung lớp phân tích.</div>
-        </section>
+        <section class="analysis-panel panel panel-accent hidden" id="tarotAnalysisPanel"><div class="section-head"><div><span class="eyebrow">Kết luận dễ hiểu</span><h3 id="tarotAnalysisTitle">Điều đáng chú ý nhất</h3></div><span class="badge" id="tarotAnalysisBadge">Kết quả</span></div><div class="deep-grid"><div class="analysis-copy" id="tarotSummary"></div><div class="action-card"><small>BẠN CÓ THỂ LÀM GÌ TIẾP?</small><ol id="tarotActions"></ol></div></div></section>
       </div>
-
-      <details class="advanced panel">
-        <summary><span><b>Xem 8 chỉ số chi tiết</b><small>Mở phần này nếu bạn muốn biết từng con số riêng lẻ.</small></span><i>+</i></summary>
-        <div class="advanced-body"><div class="metrics-grid" id="numerologyMetrics"></div></div>
-      </details>
-
-      <details class="advanced panel formula-panel">
-        <summary><span><b>Xem cách hệ thống tính các con số</b><small>Phần kỹ thuật dành cho người muốn kiểm tra công thức.</small></span><i>+</i></summary>
-        <div class="advanced-body"><div id="numerologyFormula" class="formula-list"></div></div>
-      </details>
-    </section>
-
-    <!-- HOROSCOPE -->
-    <section class="view" id="view-horoscope">
-      <div class="page-title simple-page-title">
-        <div><span class="eyebrow">TỬ VI TỔNG QUAN</span><h1>Xem từ thông tin dễ hiểu đến phần chuyên sâu.</h1><p>Phần đầu cho bạn biết tuổi Can Chi, ngày âm và cung. Các quan hệ Tam hợp, đối xung và Cung phi Nam/Nữ nằm ở các khối riêng phía dưới.</p></div>
-        <button class="btn secondary" data-go="profile">Thông tin của tôi</button>
-      </div>
-
-      <section class="panel profile-banner friendly-banner">
-        <div class="profile-symbol" id="zodiacOrb">✦</div>
-        <div class="profile-banner-copy"><span class="eyebrow">HỒ SƠ ĐANG XEM</span><h2 id="horoscopeName">Chưa có dữ liệu</h2><p id="horoscopeSub">Thiết lập ngày sinh để phân tích.</p></div>
-        <div class="tag-row" id="horoscopeTags"></div>
-      </section>
-
-      <div class="section-title-simple compact-title"><span class="step-dot">1</span><div><h2>Thông tin cơ bản</h2><p>Đây là phần nên đọc trước.</p></div></div>
-      <div class="pillar-grid friendly-pillars">
-        <article class="pillar-card panel"><small>TUỔI CAN CHI</small><strong id="yearPillar">—</strong><span id="yearAnimal">—</span><p id="yearPillarDesc">Can Chi năm sinh.</p></article>
-        <article class="pillar-card panel accent-card"><small>NGÀY SINH ÂM LỊCH</small><strong id="lunarDate">—</strong><span id="lunarMeta">UTC+7</span><p id="lunarDesc">Ngày âm quy đổi từ ngày sinh.</p></article>
-        <article class="pillar-card panel"><small>CAN CHI NGÀY SINH</small><strong id="dayPillar">—</strong><span id="dayAnimal">—</span><p id="dayPillarDesc">Can Chi của ngày sinh.</p></article>
-        <article class="pillar-card panel"><small>CAN CHI GIỜ SINH</small><strong id="hourPillar">—</strong><span id="hourAnimal">—</span><p id="hourPillarDesc">Cần giờ sinh để tính.</p></article>
-      </div>
-
-      <section class="panel primary-reading-card horoscope-summary-card">
-        <div class="section-mini-head"><div><span class="eyebrow">TÓM TẮT DỄ HIỂU</span><h3>Điểm nổi bật của hồ sơ</h3></div><span class="badge">Nên đọc trước</span></div>
-        <div class="reading large-reading" id="horoscopeReading">Chưa đủ dữ liệu.</div>
-      </section>
-
-      <div class="section-title-simple compact-title"><span class="step-dot">2</span><div><h2>Tam hợp, đối xung và Nam/Nữ</h2><p>Mỗi khái niệm được tách riêng để dễ đọc.</p></div></div>
-      <div class="two-col friendly-cols astro-core-grid">
-        <section class="panel padded relation-panel">
-          <span class="eyebrow">ĐỊA CHI</span><h3>Tam hợp & đối xung</h3>
-          <p class="intro-text">Phần này trả lời: tuổi của bạn hợp với Chi nào, xung trực tiếp với Chi nào và thuộc nhóm nào.</p>
-          <div class="relation-list" id="compatibilityBox"></div>
-          <p class="relation-note">Tam hợp và đối xung của Địa Chi không thay đổi theo Nam/Nữ.</p>
-        </section>
-        <section class="panel padded gender-astro-panel">
-          <div class="section-mini-head"><div><span class="eyebrow">NAM / NỮ</span><h3>Cung phi Bát Trạch</h3></div><span class="badge" id="genderAstroBadge">Cần hồ sơ</span></div>
-          <p class="intro-text">Đây mới là phần có công thức khác giữa Nam và Nữ cùng năm sinh.</p>
-          <div class="gender-compare" id="genderAstroBox"></div>
-          <div class="reading" id="genderAstroReading">Chọn giới tính Nam hoặc Nữ trong hồ sơ để hệ thống đánh dấu Cung phi tương ứng.</div>
-        </section>
-      </div>
-
-      <details class="advanced panel">
-        <summary><span><b>Xem thêm Ngũ hành Thiên Can & Cung hoàng đạo</b><small>Thông tin bổ sung, không cần đọc nếu bạn chỉ muốn kết quả chính.</small></span><i>+</i></summary>
-        <div class="advanced-body advanced-two-col">
-          <section class="sub-card"><span class="eyebrow">NGŨ HÀNH THIÊN CAN</span><h3 id="elementTitle">—</h3><div class="element-bars" id="elementBars"></div><p class="muted" id="elementDesc">Chưa có dữ liệu.</p></section>
-          <section class="sub-card"><span class="eyebrow">CUNG HOÀNG ĐẠO</span><h3 id="westernZodiac">—</h3><p class="muted" id="westernDesc">Chưa có dữ liệu.</p></section>
-        </div>
-      </details>
-    </section>
-
-    <!-- DATES -->
-    <section class="view" id="view-dates">
-      <div class="page-title simple-page-title">
-        <div><span class="eyebrow">TÌM NGÀY PHÙ HỢP</span><h1>Chọn việc cần làm, hệ thống sẽ xếp hạng ngày.</h1><p>Bạn không cần đọc hết tiêu chí. Hãy xem ngày đứng đầu trước; nếu muốn biết lý do, mở “Vì sao được điểm này?”.</p></div>
-        <button class="btn secondary" data-go="profile">Thông tin của tôi</button>
-      </div>
-
-      <div class="guided-layout date-guided">
-        <aside class="guide-card panel">
-          <div class="guide-heading"><span class="step-dot">1</span><div><strong>Bạn cần chọn ngày cho việc gì?</strong><small>Chọn mục đích và khoảng thời gian.</small></div></div>
-          <label class="field"><span>Mục đích</span>
-            <select id="datePurpose"><option value="general">Việc chung</option><option value="work">Khai trương / công việc</option><option value="contract">Ký kết / hợp đồng</option><option value="travel">Xuất hành / đi xa</option><option value="love">Hẹn hò / tình cảm</option><option value="study">Thi cử / học tập</option></select>
-          </label>
-          <div class="field-pair"><label class="field"><span>Từ ngày</span><input type="date" id="dateFrom"></label><label class="field"><span>Đến ngày</span><input type="date" id="dateTo"></label></div>
-          <button class="btn primary full big-action" id="scanDatesBtn">2. Tìm ngày phù hợp</button>
-          <div class="simple-scale"><span><b>80+</b> Rất phù hợp</span><span><b>68+</b> Khá phù hợp</span><span><b>52+</b> Trung tính</span><span><b>&lt;52</b> Cân nhắc</span></div>
-        </aside>
-
-        <div class="main-result-column">
-          <section class="best-date-panel panel">
-            <div><span class="eyebrow">KẾT QUẢ QUAN TRỌNG NHẤT</span><h2>Ngày phù hợp nhất trong khoảng bạn chọn</h2></div>
-            <div class="best-date-grid">
-              <div class="best-date-main"><small>NGÀY ĐỨNG ĐẦU</small><strong id="bestDate">—</strong><span id="bestDateMeta">Chưa phân tích</span></div>
-              <div><small>ĐIỂM</small><strong id="bestScore">—</strong><span>/100</span></div>
-              <div><small>SỐ NGÀY KHÁ TỐT</small><strong id="goodDateCount">—</strong><span>điểm từ 68</span></div>
-              <div><small>HỒ SƠ TUỔI</small><strong id="dateProfileBranch">—</strong><span id="dateProfileElement">—</span></div>
-            </div>
-          </section>
-
-          <section class="panel padded date-ranking-panel">
-            <div class="section-mini-head"><div><span class="eyebrow">CÁC NGÀY THEO THỨ TỰ</span><h3 id="dateRankingTitle">Kết quả theo mục đích</h3></div><button class="mini-btn hidden" id="toggleAllDates">Xem tất cả</button></div>
-            <div class="date-list" id="dateResults"><div class="empty-state compact"><div class="empty-orb">◌</div><p>Chọn khoảng ngày rồi bấm “Tìm ngày phù hợp”.</p></div></div>
-          </section>
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <div class="modal-backdrop hidden" id="profileModal">
-    <div class="modal panel">
-      <button class="modal-close" id="closeProfileModal">×</button>
-      <div class="modal-head"><span class="eyebrow">THÔNG TIN CỦA TÔI</span><h2>Nhập một lần, dùng cho mọi chức năng.</h2><p>Họ tên và ngày sinh là bắt buộc. Giờ sinh và giới tính giúp một số phần phân tích chi tiết hơn.</p></div>
-      <form id="profileForm">
-        <label class="field"><span>Họ và tên *</span><input id="fullName" maxlength="80" required placeholder="Nguyễn Văn A"></label>
-        <div class="field-pair"><label class="field"><span>Ngày sinh dương lịch *</span><input type="date" id="birthDate" required></label><label class="field"><span>Giờ sinh (nếu biết)</span><input type="time" id="birthTime"></label></div>
-        <div class="field-pair"><label class="field"><span>Giới tính dùng cho phân tích</span><select id="gender"><option value="">Chưa chọn</option><option value="male">Nam</option><option value="female">Nữ</option><option value="other">Khác / không dùng công thức Nam-Nữ</option></select><small class="field-help">Chỉ một số phần như Cung phi Bát Trạch mới dùng công thức Nam/Nữ khác nhau.</small></label><label class="field"><span>Nơi sinh (không bắt buộc)</span><input id="birthPlace" maxlength="80" placeholder="Bình Thuận, Việt Nam"></label></div>
-        <label class="checkline"><input type="checkbox" id="privacyAgree" required><span>Tôi hiểu Tarot/tử vi là nội dung tham khảo và đồng ý lưu hồ sơ trên thiết bị này.</span></label>
-        <div class="modal-actions"><button type="button" class="btn ghost" id="clearProfileBtn">Xóa hồ sơ</button><button class="btn primary" type="submit">Lưu thông tin</button></div>
-      </form>
     </div>
-  </div>
+  </section>
 
-  <footer><div><strong>HUYỀN CÁC</strong><span>v3.3</span></div><p>Nội dung Tarot/tử vi mang tính văn hóa, giải trí và tự chiêm nghiệm. Các công thức được tách riêng để người dùng có thể kiểm tra khi cần.</p></footer>
-  <script src="app.js"></script>
+  <!-- NUMEROLOGY -->
+  <section class="view" id="view-fortune">
+    <section class="page-hero panel panel-accent reveal"><div><span class="eyebrow">Thần số học • Chân dung số</span><h1>Đọc phần tổng hợp trước, chỉ số chi tiết xem sau.</h1><p>Hệ thống tính từ họ tên và ngày sinh, sau đó tách rõ phần tính toán và phần diễn giải tham khảo.</p><div class="hero-chips"><span class="chip"><i></i>8 chỉ số</span><span class="chip"><i></i>Nhịp năm / tháng / ngày</span><span class="chip"><i></i>Có công thức kiểm tra</span></div></div><button class="btn secondary" data-action="profile-open">Thông tin của tôi</button></section>
+    <section class="primary-reading panel panel-accent reveal"><div class="section-head"><div><span class="eyebrow">Kết quả chính</span><h3>Chân dung tổng hợp</h3></div><span class="badge">Nên đọc trước</span></div><div class="reading" id="numerologyReading">Tạo hồ sơ để xem phân tích.</div></section>
+    <div class="two-col">
+      <section class="padded panel reveal"><div class="section-head"><div><span class="eyebrow">Nhịp hiện tại</span><h3>Năm • tháng • ngày cá nhân</h3></div><span class="badge" id="currentDateBadge">—</span></div><div class="cycle-grid" id="cycleStack"></div></section>
+      <section class="padded panel reveal"><div class="section-head"><div><span class="eyebrow">Theo hồ sơ</span><h3 id="numerologyGenderTitle">Nam/Nữ</h3></div><span class="badge" id="numerologyGenderBadge">Hồ sơ</span></div><div class="reading" id="numerologyGenderReading">Chọn giới tính trong hồ sơ để bổ sung lớp phân tích.</div></section>
+    </div>
+    <details class="advanced panel reveal" open><summary><span><b>8 chỉ số trực quan</b><small>Vòng tròn là biểu diễn thị giác của con số, không phải phần trăm dự đoán.</small></span><i>+</i></summary><div class="advanced-body"><div class="metrics-grid" id="numerologyMetrics"></div></div></details>
+    <details class="advanced panel reveal"><summary><span><b>Cách hệ thống tính</b><small>Mở khi muốn kiểm tra công thức.</small></span><i>+</i></summary><div class="advanced-body"><div class="formula-grid" id="numerologyFormula"></div></div></details>
+  </section>
+
+  <!-- HOROSCOPE -->
+  <section class="view" id="view-horoscope">
+    <section class="page-hero panel panel-accent reveal"><div><span class="eyebrow">Tử vi tổng quan • Can Chi</span><h1>Từ thông tin cơ bản đến quan hệ chuyên sâu.</h1><p>Ngày âm, Can Chi năm/ngày/giờ, Tam hợp, Lục hợp, Đối xung, Cung phi Nam/Nữ và Ngũ hành được tách thành từng lớp dễ đọc.</p><div class="hero-chips"><span class="chip"><i></i>Ngày âm & Can Chi</span><span class="chip"><i></i>Tam hợp • Lục hợp • Đối xung</span><span class="chip"><i></i>Cung phi Nam/Nữ</span></div></div><button class="btn secondary" data-action="profile-open">Thông tin của tôi</button></section>
+    <section class="profile-banner panel panel-accent reveal"><div class="zodiac-orb"><span id="zodiacOrb">✦</span></div><div><span class="eyebrow">Hồ sơ đang xem</span><h2 id="horoscopeName">Chưa có dữ liệu</h2><p class="muted" id="horoscopeSub">Thiết lập ngày sinh để phân tích.</p></div><div class="tag-row" id="horoscopeTags"></div></section>
+    <div class="pillar-grid" id="horoscopePillars"></div>
+    <section class="primary-reading panel panel-accent reveal"><div class="section-head"><div><span class="eyebrow">Tóm tắt dễ hiểu</span><h3>Điểm nổi bật của hồ sơ</h3></div><span class="badge">Nên đọc trước</span></div><div class="reading" id="horoscopeReading">Chưa đủ dữ liệu.</div></section>
+    <div class="two-col">
+      <section class="padded panel reveal"><span class="eyebrow">Địa Chi</span><h3>Tam hợp & đối xung</h3><p class="muted" style="font-size:10px;margin-bottom:12px">Ghi rõ từng quan hệ: Tam hợp, Lục hợp, Lục xung/đối xung và Tứ hành xung.</p><div class="relation-list" id="compatibilityBox"></div></section>
+      <section class="padded panel reveal"><div class="section-head"><div><span class="eyebrow">Nam / Nữ</span><h3>Cung phi Bát Trạch</h3></div><span class="badge" id="genderAstroBadge">Cần hồ sơ</span></div><div class="gender-compare" id="genderAstroBox"></div><div class="reading" id="genderAstroReading" style="margin-top:14px">Chọn giới tính để đánh dấu Cung phi tương ứng.</div></section>
+    </div>
+    <details class="advanced panel reveal" open><summary><span><b>Ngũ hành Thiên Can & Cung hoàng đạo</b><small>Biểu đồ Ngũ hành chỉ đếm các Thiên Can hiện có dữ liệu.</small></span><i>+</i></summary><div class="advanced-body two-col"><section><span class="eyebrow">Ngũ hành Thiên Can</span><h3 id="elementTitle">—</h3><div class="element-bars" id="elementBars"></div><p class="muted" id="elementDesc" style="font-size:9px;margin-top:12px"></p></section><section><span class="eyebrow">Cung hoàng đạo</span><h3 id="westernZodiac">—</h3><p class="muted" id="westernDesc" style="font-size:10px"></p></section></div></details>
+  </section>
+
+  <!-- DATES -->
+  <section class="view" id="view-dates">
+    <section class="page-hero panel panel-accent reveal"><div><span class="eyebrow">Tra ngày phù hợp • Xếp hạng</span><h1>Chọn việc cần làm, hệ thống sẽ xếp hạng ngày.</h1><p>Ngày đứng đầu được làm nổi bật. Mỗi ngày có thể mở phần lý do để xem rõ từng tiêu chí cộng/trừ điểm.</p><div class="hero-chips"><span class="chip"><i></i>Thang 0–100</span><span class="chip"><i></i>Ngày nổi bật nhất</span><span class="chip"><i></i>Giải thích từng điểm</span></div></div><button class="btn secondary" data-action="profile-open">Thông tin của tôi</button></section>
+    <div class="guided-layout">
+      <aside class="guide-card panel panel-accent reveal"><div class="guide-title"><span class="brand-sigil"><svg class="icon"><use href="#i-calendar"/></svg></span><div><strong>Tiêu chí tra cứu</strong><small>Khoảng tối đa 60 ngày.</small></div></div><label class="form-field"><span>Mục đích</span><select id="datePurpose"><option value="general">Việc chung</option><option value="work">Khai trương / công việc</option><option value="contract">Ký kết / hợp đồng</option><option value="travel">Xuất hành / đi xa</option><option value="love">Hẹn hò / tình cảm</option><option value="study">Thi cử / học tập</option></select></label><div class="form-grid"><label class="form-field"><span>Từ ngày</span><input type="date" id="dateFrom"></label><label class="form-field"><span>Đến ngày</span><input type="date" id="dateTo"></label></div><button class="btn primary full" data-action="dates-scan">Phân tích khoảng ngày</button><div class="simple-scale"><span><b>80+</b> Rất phù hợp</span><span><b>68+</b> Khá phù hợp</span><span><b>52+</b> Trung tính</span><span><b>&lt;52</b> Cân nhắc</span></div></aside>
+      <div class="result-stack"><section class="best-date panel panel-accent reveal" id="bestDatePanel"><span class="eyebrow">Kết quả quan trọng nhất</span><h3>Ngày phù hợp nhất trong khoảng đã chọn</h3><div class="best-grid"><div class="best-cell"><small>NGÀY ĐỨNG ĐẦU</small><strong id="bestDate">—</strong><span id="bestDateMeta">Chưa phân tích</span></div><div class="best-cell"><small>ĐIỂM</small><strong id="bestScore">—</strong><span>/100</span></div><div class="best-cell"><small>SỐ NGÀY KHÁ TỐT</small><strong id="goodDateCount">—</strong><span>điểm từ 68</span></div><div class="best-cell"><small>HỒ SƠ TUỔI</small><strong id="dateProfileBranch">—</strong><span id="dateProfileElement">—</span></div></div></section><section class="padded panel reveal"><div class="section-head"><div><span class="eyebrow">Xếp hạng ngày</span><h3 id="dateRankingTitle">Kết quả theo mục đích</h3></div><button class="btn ghost hidden" id="toggleAllDates" data-action="dates-toggle">Xem tất cả</button></div><div class="date-list" id="dateResults"><div class="empty-state compact"><p>Chọn khoảng ngày rồi bấm “Phân tích khoảng ngày”.</p></div></div></section></div>
+    </div>
+  </section>
+</main>
+
+<!-- PROFILE MODAL -->
+<div class="modal-backdrop hidden" id="profileModal">
+  <div class="modal glass panel panel-accent">
+    <button class="modal-close" data-action="profile-close">×</button>
+    <div class="modal-head"><span class="eyebrow">Hồ sơ cá nhân</span><h2>Nhập một lần, dùng cho mọi chức năng.</h2><p>Họ tên và ngày sinh là bắt buộc. Giờ sinh và giới tính giúp một số phần phân tích chi tiết hơn.</p></div>
+    <form id="profileForm">
+      <label class="form-field"><span>Họ và tên *</span><input id="fullName" maxlength="80" required placeholder="Nguyễn Văn A"></label>
+      <div class="form-grid"><label class="form-field"><span>Ngày sinh dương lịch *</span><input type="date" id="birthDate" required></label><label class="form-field"><span>Giờ sinh (nếu biết)</span><input type="time" id="birthTime"></label></div>
+      <div class="form-grid"><label class="form-field"><span>Giới tính dùng cho phân tích</span><select id="gender"><option value="">Chưa chọn</option><option value="male">Nam</option><option value="female">Nữ</option><option value="other">Khác / không dùng công thức Nam-Nữ</option></select></label><label class="form-field"><span>Nơi sinh</span><input id="birthPlace" maxlength="80" placeholder="Bình Thuận, Việt Nam"></label></div>
+      <label class="checkline"><input type="checkbox" id="privacyAgree" required><span>Tôi hiểu Tarot/tử vi là nội dung tham khảo và đồng ý lưu hồ sơ trên thiết bị này.</span></label>
+      <div class="modal-actions"><button type="button" class="btn ghost" data-action="profile-clear">Xóa hồ sơ</button><button class="btn primary" type="submit">Lưu thông tin</button></div>
+    </form>
+  </div>
+</div>
+
+<footer><div><strong>HUYỀN CÁC</strong> · v5.1</div><p>Nội dung Tarot/tử vi mang tính văn hóa, giải trí và tự chiêm nghiệm. Các phép tính được tách khỏi phần diễn giải để dễ kiểm tra và bảo trì.</p></footer>
+
+
+<script type="module" src="assets/js/app.js"></script>
 </body>
 </html>

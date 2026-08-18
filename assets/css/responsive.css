@@ -1,0 +1,8 @@
+/* RESPONSIVE */
+@media(max-width:1100px){
+  .topbar{grid-template-columns:1fr auto}.nav{display:none}.hero{grid-template-columns:1fr}.feature-grid{grid-template-columns:1fr 1fr}.guided-layout{grid-template-columns:1fr}.guide-card{position:static}.metrics-grid,.pillar-grid{grid-template-columns:1fr 1fr}.deep-grid{grid-template-columns:1fr}.two-col{grid-template-columns:1fr}.best-grid{grid-template-columns:1fr 1fr}.page-hero{grid-template-columns:1fr}.page-hero .btn{justify-self:start}.tarot-grid,.tarot-grid.auto{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:700px){
+  body{font-size:14px}.topbar{height:auto;padding:11px 14px}.brand small,.profile-chip small{display:none}.profile-chip strong{max-width:110px}.shell{width:min(100% - 20px,var(--content));padding-top:20px}.hero{padding:24px 20px}.hero h1{font-size:40px}.feature-grid,.metrics-grid,.pillar-grid,.tarot-grid,.tarot-grid.auto,.cycle-grid,.gender-compare,.best-grid,.form-grid,.formula-grid{grid-template-columns:1fr}.feature-card{min-height:auto}.page-hero{padding:22px 18px}.logic-strip{grid-template-columns:1fr}.result-panel{padding:17px}.empty-state{min-height:320px}.profile-banner{grid-template-columns:auto 1fr}.tag-row{grid-column:1/-1;justify-content:flex-start}.date-main{grid-template-columns:60px 1fr}.score{grid-column:1/-1;justify-self:start}.modal{padding:20px}footer{width:min(100% - 20px,var(--content));display:block}footer p{margin-top:7px}
+}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}

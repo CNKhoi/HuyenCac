@@ -31,3 +31,936 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:focus-vis
 @media(max-width:1100px){.topbar{grid-template-columns:1fr auto}.nav{display:none}.welcome-card{grid-template-columns:1fr}.choice-grid{grid-template-columns:1fr 1fr}.simple-how{grid-template-columns:1fr}.guided-layout{grid-template-columns:1fr}.guide-card{position:static}.pillar-grid{grid-template-columns:1fr 1fr}.metrics-grid{grid-template-columns:1fr 1fr}.best-date-grid{grid-template-columns:1fr 1fr}.best-date-grid>div{border-bottom:1px solid var(--line)}.best-date-grid>div:nth-child(2n){border-right:0}}
 @media(max-width:760px){body{font-size:15px}.topbar{height:auto;padding:12px 14px}.brand small{display:none}.profile-chip{max-width:210px}.profile-chip small{display:none}.profile-chip strong{max-width:115px}.shell{width:min(100% - 20px,1280px);padding-top:22px}.welcome-card{padding:25px 20px;gap:25px}.welcome-copy h1{font-size:40px}.welcome-copy>p{font-size:14px}.choice-grid,.how-grid,.two-col,.pillar-grid,.metrics-grid,.formula-list,.advanced-two-col,.field-pair,.gender-compare{grid-template-columns:1fr}.choice-card{grid-template-columns:auto 1fr}.choice-action{grid-column:2}.simple-how{padding:22px}.page-title{display:block}.page-title .btn{margin-top:14px}.page-title h1{font-size:34px}.page-title p{font-size:13px}.result-heading-simple,.section-mini-head{display:block}.session-code,.badge{margin-top:10px;width:max-content}.tarot-grid,.tarot-grid.auto-spread{grid-template-columns:1fr}.deep-grid{grid-template-columns:1fr}.profile-banner{grid-template-columns:auto 1fr}.tag-row{grid-column:1/-1}.best-date-grid{grid-template-columns:1fr}.best-date-grid>div{border-right:0!important}.date-main{grid-template-columns:62px 1fr}.score-badge{grid-column:1/-1;width:max-content}.advanced summary{padding:16px}.advanced-body{padding:16px}.modal{padding:22px}footer{width:min(100% - 20px,1280px);display:block}footer p{text-align:left;margin-top:7px}}
 .relation-more{border-top:1px dashed #ddd3e8;margin-top:3px;padding-top:4px}.relation-more summary{cursor:pointer;list-style:none;padding:10px 4px 5px;color:#604985;font-size:10px;font-weight:800}.relation-more summary::-webkit-details-marker{display:none}.relation-more summary:after{content:'+';float:right;width:22px;height:22px;border-radius:7px;display:grid;place-items:center;background:#eee7f7;color:#5d4497}.relation-more[open] summary:after{content:'−'}.relation-more-body{display:grid;gap:10px;padding-top:7px}
+
+
+/* v3.4 — motion, logic strips, cleaner UX */
+html{scroll-padding-top:96px}
+body{background:linear-gradient(180deg,#f9f7fd 0%,#f3eefb 100%)}
+.topbar{transition:background .25s ease, box-shadow .25s ease, border-color .25s ease}
+.nav-link,.choice-card,.btn,.panel,.advanced,.mini-btn,.text-button{transition:transform .22s ease, box-shadow .22s ease, background-color .22s ease, border-color .22s ease, color .22s ease, opacity .22s ease}
+.btn:hover,.choice-card:hover,.mini-btn:hover{transform:translateY(-2px)}
+.btn:active,.choice-card:active{transform:translateY(0)}
+.panel:hover{box-shadow:0 22px 60px rgba(72,53,108,.10)}
+.welcome-card,.simple-how,.logic-strip,.guide-card,.primary-reading-card,.best-date-panel,.date-ranking-panel,.analysis-panel,.profile-banner,.advanced,.pillar-card,.relation-panel,.gender-astro-panel,.gender-panel{position:relative;overflow:hidden}
+.welcome-card::after,.logic-strip::after,.best-date-panel::after,.primary-reading-card::after,.profile-banner::after{
+  content:"";position:absolute;inset:auto -80px -80px auto;width:180px;height:180px;border-radius:50%;
+  background:radial-gradient(circle,rgba(142,109,214,.12),rgba(142,109,214,0));pointer-events:none;
+}
+.choice-card{position:relative;overflow:hidden}
+.choice-card::before{
+  content:"";position:absolute;inset:0;background:linear-gradient(120deg,transparent 0%,rgba(255,255,255,.7) 45%,transparent 80%);
+  transform:translateX(-130%);opacity:0;transition:transform .7s ease, opacity .35s ease;
+}
+.choice-card:hover::before{transform:translateX(130%);opacity:.6}
+.logic-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;padding:18px 20px;margin:0 0 18px}
+.compact-strip{margin-top:0}
+.logic-step{display:flex;gap:12px;align-items:flex-start;padding:14px 16px;border-radius:18px;background:linear-gradient(180deg,#ffffff,#faf7ff);border:1px solid #e4ddf0}
+.logic-step span{width:34px;height:34px;flex:0 0 auto;display:grid;place-items:center;border-radius:12px;background:linear-gradient(135deg,#7a5dde,#b564a0);color:#fff;font-weight:800;font-size:13px;box-shadow:0 8px 20px rgba(115,89,188,.18)}
+.logic-step strong{display:block;font-size:14px;color:#302541;margin-bottom:4px;line-height:1.35}
+.logic-step p{margin:0;font-size:12px;color:#6e657d;line-height:1.65}
+.guide-card,.best-date-panel,.primary-reading-card,.analysis-panel,.advanced,.date-ranking-panel{scroll-margin-top:100px}
+.result-heading-simple h2,.best-date-panel h2{line-height:1.25}
+.intro-text{font-size:13px;line-height:1.78;color:#6d637d;margin:10px 0 16px}
+.text-button{border:0;background:none;color:#6f57b3;font-size:12px;font-weight:700;padding:10px 4px;margin-top:4px}
+.text-button:hover{color:#513691}
+.summary-focus{border-left:4px solid #8362de;padding-left:14px}
+.reveal{opacity:0;transform:translateY(24px) scale(.985);filter:blur(4px);will-change:transform,opacity,filter}
+.reveal.is-visible{opacity:1;transform:none;filter:none;transition:opacity .55s ease, transform .55s cubic-bezier(.2,.8,.2,1), filter .55s ease}
+.tarot-reading.reveal,.date-item.reveal,.cycle-row.reveal,.metric-card.reveal,.relation-item.reveal,.gender-kua.reveal{transform:translateY(18px) scale(.985)}
+.tarot-card-face{box-shadow:inset 0 1px 0 rgba(255,255,255,.65), 0 18px 40px rgba(86,63,127,.08)}
+.tarot-card-face .tarot-art{transition:transform .35s ease}
+.tarot-reading:hover .tarot-art{transform:translateY(-2px) scale(1.06)}
+.tarot-card-face.reversed .tarot-art{transform:rotate(180deg)}
+.tarot-reading:hover .tarot-card-face.reversed .tarot-art{transform:rotate(180deg) translateY(-2px) scale(1.06)}
+.advanced summary,.factor-details summary,.relation-more summary{list-style:none;cursor:pointer}
+.advanced summary::-webkit-details-marker,.factor-details summary::-webkit-details-marker,.relation-more summary::-webkit-details-marker{display:none}
+.advanced summary i,.factor-details summary::after,.relation-more summary::after{transition:transform .22s ease}
+.advanced[open] summary i,.factor-details[open] summary::after,.relation-more[open] summary::after{transform:rotate(45deg)}
+.factor-details summary::after,.relation-more summary::after{content:"＋";float:right;font-weight:800;color:#6e57ac}
+.factor-details{margin-top:12px;border-top:1px dashed #e2daed;padding-top:12px}
+.factor-details summary{font-size:12px;font-weight:700;color:#564578}
+.score-breakdown{animation:fadeSoft .28s ease}
+@keyframes fadeSoft{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.section-title-simple,.section-mini-head,.result-heading-simple,.guide-heading{position:relative}
+.step-dot{box-shadow:0 10px 24px rgba(117,90,194,.16)}
+.best-date-main strong,#bestScore,#goodDateCount,.quick-stats strong,.metric-card strong{font-variant-numeric:tabular-nums}
+@media (max-width:980px){
+  .logic-strip{grid-template-columns:1fr;gap:12px}
+}
+@media (max-width:700px){
+  .logic-strip{padding:14px}
+  .logic-step{padding:14px}
+  .logic-step strong{font-size:13px}
+  .logic-step p,.intro-text{font-size:12px}
+}
+
+
+/* v3.5 — minimalist professional theme */
+:root{
+  --bg:#f4f6f8;
+  --surface:#ffffff;
+  --soft:#f8fafc;
+  --soft2:#f2f5f8;
+  --text:#182230;
+  --muted:#5d6978;
+  --line:#dde3ea;
+  --primary:#234b7a;
+  --primary2:#234b7a;
+  --green:#1f7a5a;
+  --blue:#1e6f9b;
+  --amber:#9c6b17;
+  --red:#b64c5f;
+  --shadow:0 10px 28px rgba(15,23,42,.06);
+  --r:18px;
+}
+html{scroll-padding-top:88px}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+.topbar{
+  height:78px;
+  background:rgba(255,255,255,.95);
+  border-bottom:1px solid var(--line);
+  box-shadow:0 2px 14px rgba(15,23,42,.04);
+  backdrop-filter:blur(12px);
+}
+.brand-seal{
+  width:40px;height:40px;border-radius:12px;
+  background:var(--primary);
+  font-size:16px;
+}
+.brand strong{font-size:13px;letter-spacing:.14em;color:#182230}
+.brand small{font-size:10px;color:var(--muted)}
+.nav{
+  background:#fff;border:1px solid var(--line);box-shadow:none;padding:4px;
+}
+.nav-link{
+  border-radius:12px;font-size:13px;padding:10px 14px;color:#5b6674;font-weight:700;
+}
+.nav-link:hover,.nav-link.active{background:var(--soft2);color:#1f3551}
+.profile-chip{
+  border:1px solid var(--line);box-shadow:none;border-radius:14px;background:#fff;
+}
+.profile-chip .avatar{background:#edf2f7;color:#27496e}
+.shell{width:min(1240px,calc(100% - 40px));padding:28px 0 72px}
+.panel{
+  border:1px solid var(--line);
+  border-radius:var(--r);
+  box-shadow:var(--shadow);
+  background:#fff;
+}
+.panel:hover{box-shadow:0 12px 30px rgba(15,23,42,.07)}
+.welcome-card,.simple-how,.logic-strip,.guide-card,.primary-reading-card,.best-date-panel,.date-ranking-panel,.analysis-panel,.profile-banner,.advanced,.pillar-card,.relation-panel,.gender-astro-panel,.gender-panel,
+.choice-card,.quick-profile,.logic-step{
+  background:#fff;
+}
+.welcome-card::after,.logic-strip::after,.best-date-panel::after,.primary-reading-card::after,.profile-banner::after,
+.choice-card::before{display:none!important}
+.eyebrow{color:#48607b;font-size:10px;letter-spacing:.16em}
+.welcome-copy h1,.page-title h1,.section-title-simple h2,.simple-how h2,.result-heading-simple h2,
+.section-mini-head h3,.best-date-panel h2,.modal-head h2,.pillar-card strong,.best-date-grid strong,.quick-profile-main strong,.empty-state h3{
+  font-family:inherit;
+  letter-spacing:-.02em;
+}
+.welcome-card{gap:32px;padding:36px;border-radius:22px}
+.welcome-copy h1{font-size:clamp(34px,4.5vw,54px);line-height:1.08;margin:10px 0 14px}
+.welcome-copy>p{font-size:15px;line-height:1.8;color:var(--muted);max-width:660px}
+.welcome-actions>b,.section-title-simple p,.page-title p,.quick-profile-main p,.intro-text,.field-help,.plain-help p,.muted,.date-info p,.factor span,.logic-step p{color:var(--muted)}
+.quick-profile{border:1px solid var(--line);border-radius:20px;box-shadow:none;padding:22px}
+.status-pill{background:#edf7f3;color:#1f7a5a;font-weight:700}
+.sigil,.profile-symbol,.empty-orb,.step-dot,.logic-step span{border-radius:14px}
+.sigil{width:64px;height:64px;background:#eef3f8;color:#27496e}
+.quick-profile-main strong{font-size:22px;color:#182230}
+.quick-stats{border-color:var(--line)}
+.quick-stats small{color:#6a7686}
+.quick-stats strong{font-size:13px;color:#1b2634}
+.choice-section{margin-top:40px}
+.section-title-simple h2{font-size:28px;color:#182230}
+.step-dot{background:#edf2f7;color:#27496e;box-shadow:none}
+.choice-grid{gap:14px}
+.choice-card{
+  border:1px solid var(--line);
+  border-radius:18px;
+  box-shadow:none;
+  padding:20px 22px;
+}
+.choice-card:hover{border-color:#c8d2dd;box-shadow:0 8px 20px rgba(15,23,42,.05);transform:translateY(-1px)}
+.choice-icon{width:46px;height:46px;border-radius:12px;background:#f1f5f9;font-size:21px}
+.choice-body strong{font-size:17px;color:#182230}
+.choice-body small{font-size:12px;line-height:1.65}
+.choice-action{color:#234b7a;font-weight:700}
+.simple-how{padding:26px 28px;gap:26px}
+.simple-how h2{font-size:28px;color:#182230}
+.how-grid>div{background:#fff;border-color:var(--line);border-radius:14px}
+.how-grid span{background:#edf2f7;color:#27496e;box-shadow:none}
+.page-title{margin:6px 0 22px}
+.page-title h1{font-size:clamp(32px,4vw,46px);line-height:1.15;color:#182230}
+.page-title p{font-size:14px;line-height:1.75;max-width:760px}
+.logic-strip{padding:14px 16px;gap:12px;margin-bottom:16px;border-radius:16px}
+.logic-step{padding:14px;border:1px solid var(--line);border-radius:14px}
+.logic-step span{background:#edf2f7;color:#27496e;width:32px;height:32px;font-size:12px}
+.logic-step strong{font-size:13px;color:#182230}
+.guide-card,.clean-result,.padded,.best-date-panel,.analysis-panel,.advanced-body,.modal{padding:22px}
+.guide-card{top:94px;border-radius:18px}
+.guide-heading strong,.result-heading-simple h2,.section-mini-head h3,.best-date-panel h2{color:#182230}
+.guide-heading small,.plain-help b{color:#42586f}
+.field>span{color:#344658;font-size:11px}
+input,select,textarea{
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:#fff;
+  color:#182230;
+  padding:12px 13px;
+  font-size:13px;
+}
+input:focus,select:focus,textarea:focus{border-color:#88a2bf;box-shadow:0 0 0 3px rgba(35,75,122,.10)}
+.plain-help{background:#f8fafc;border:1px solid var(--line);border-radius:14px}
+.plain-help b{font-size:12px}
+.btn{border-radius:12px;font-size:14px;padding:12px 16px}
+.btn.primary{background:var(--primary);box-shadow:none}
+.btn.primary:hover{background:#1d3f68}
+.btn.secondary{background:#f3f6f9;border:1px solid var(--line);color:#29415f}
+.btn.ghost{border:1px solid var(--line)}
+.text-button{color:#46607c}
+.result-panel{min-height:520px}
+.empty-state{min-height:420px}
+.empty-state h3{font-size:22px;color:#1c2735}
+.empty-state p{font-size:12px;color:var(--muted)}
+.empty-orb{background:#f1f5f9;color:#27496e}
+.badge,.session-code,.spread-context span,.tag-row span,.status-pill,
+.score-badge,.mini-btn,.relation-more summary:after,.factor-details summary::after{
+  box-shadow:none!important;
+}
+.badge,.spread-context span,.tag-row span,.session-code,.mini-btn{
+  border:1px solid var(--line);
+  background:#fff;
+  color:#42556a;
+}
+.tarot-reading,.metric-card,.cycle-row,.relation-item,.gender-kua,.formula-item,.sub-card,.pillar-card,.date-item,.factor,.action-card{
+  border-color:var(--line)!important;
+  box-shadow:none!important;
+}
+.tarot-reading{border-radius:16px}
+.tarot-card-face{background:#f8fafc;border:1px solid var(--line);box-shadow:none}
+.tarot-roman,.tarot-state,.tarot-pos,.relation-label,.date-cal small,.best-date-grid small,.metric-card small,.formula-item b,.cycle-row span,.cycle-row small{color:#607082}
+.tarot-name{color:#182230}
+.tarot-meaning p,.analysis-copy,.reading{color:#334255}
+.analysis-panel,.primary-reading-card,.best-date-panel,.horoscope-summary-card{border-left:4px solid #2f537f}
+.action-card{background:#f8fafc;border:1px solid var(--line);border-radius:16px}
+.metrics-grid,.two-col,.pillar-grid,.gender-compare,.advanced-two-col{gap:14px}
+.metric-card,.pillar-card,.sub-card,.gender-kua,.formula-item,.cycle-row{border-radius:14px;background:#fff}
+.metric-card strong,.summary-card strong,.best-date-grid strong,#bestScore,#goodDateCount{color:#182230}
+.primary-metric{background:#f8fafc}
+.profile-banner{border-radius:18px;padding:24px}
+.profile-symbol{background:#eef3f8;color:#27496e}
+.pillar-card small,.sub-card .eyebrow{color:#607082}
+.pillar-card strong{font-size:26px;color:#182230}
+.pillar-card span{color:#324457}
+.relation-item{background:#fff;border:1px solid var(--line);padding:14px 15px!important}
+.relation-item strong{color:#182230!important}
+.relation-note{color:var(--muted)}
+.gender-kua{padding:16px}
+.gender-kua>strong{color:#182230}
+.best-date-panel{padding:22px}
+.best-date-grid{border:1px solid var(--line);border-radius:16px;overflow:hidden;background:#fff}
+.best-date-grid>div{background:#fff}
+.best-date-main{background:#f8fafc!important}
+.best-date-grid strong{font-size:24px;color:#182230}
+.date-item{border-radius:16px;background:#fff}
+.date-cal{background:#f3f6f9;border-radius:12px}
+.date-info strong{color:#1c2938}
+.score-badge{border:1px solid var(--line)}
+.factor-details{background:#fafbfd;border-top:1px solid var(--line)}
+.factor-details summary,.relation-more summary{color:#35506e;font-size:11px}
+.advanced{border-radius:18px}
+.advanced summary{padding:18px 22px;background:#fff}
+.advanced[open] summary{border-bottom:1px solid var(--line)}
+.advanced-body{background:#fff}
+.modal-backdrop{background:rgba(15,23,42,.36)}
+.modal{border-radius:20px}
+.modal-head h2{font-size:30px;color:#182230}
+.modal-head p,.checkline{color:var(--muted)}
+footer{
+  width:min(1240px,calc(100% - 40px));
+  border-top:1px solid var(--line);
+  color:#667384;
+}
+footer p{text-align:right}
+
+/* minimal motion */
+.btn:hover,.choice-card:hover,.mini-btn:hover,.panel:hover{transform:none}
+.reveal{opacity:0;transform:translateY(14px);filter:none}
+.reveal.is-visible{transition:opacity .35s ease, transform .35s ease;opacity:1;transform:none}
+.tarot-card-face .tarot-art,.choice-card::before{transition:none}
+.tarot-reading:hover .tarot-art,.tarot-reading:hover .tarot-card-face.reversed .tarot-art{transform:none}
+
+@media (max-width:760px){
+  .shell{width:min(100% - 20px,1240px)}
+  .welcome-card{padding:22px;gap:22px}
+  .welcome-copy h1{font-size:34px}
+  .simple-how,.guide-card,.clean-result,.padded,.best-date-panel,.analysis-panel,.advanced-body,.modal{padding:18px}
+  .profile-banner{padding:18px}
+  .section-title-simple h2,.simple-how h2{font-size:24px}
+  footer{width:min(100% - 20px,1240px)}
+  footer p{text-align:left}
+}
+
+
+/* v3.6 — typography fixes + professional tarot motion + cleaner interactions */
+body{
+  font-family:"Segoe UI", Inter, Roboto, "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+/* Fix Vietnamese diacritic spacing by removing decorative serif headings */
+.welcome-copy h1,
+.page-title h1,
+.section-title-simple h2,
+.simple-how h2,
+.result-heading-simple h2,
+.section-mini-head h3,
+.best-date-panel h2,
+.modal-head h2,
+.quick-profile-main strong,
+.empty-state h3,
+.tarot-name,
+.pillar-card strong,
+.best-date-grid strong{
+  font-family:"Segoe UI", Inter, Roboto, Arial, sans-serif !important;
+  letter-spacing:0 !important;
+  font-kerning:normal;
+  font-variant-ligatures:none;
+}
+.welcome-copy h1{font-weight:800;line-height:1.12}
+.page-title h1{font-weight:800;line-height:1.18;max-width:900px}
+.result-heading-simple h2,.section-mini-head h3,.best-date-panel h2{font-weight:800}
+.tarot-name{font-size:21px;font-weight:800;line-height:1.25;color:#17212e}
+.page-title p,.welcome-copy>p,.analysis-copy,.reading{max-width:760px}
+.choice-body strong,.guide-heading strong,.metric-card strong,.profile-banner-copy h2,.gender-kua>strong{letter-spacing:0}
+
+/* More professional subtle motion */
+.panel,.choice-card,.advanced,.date-item,.metric-card,.pillar-card,.relation-item,.gender-kua,.formula-item,.action-card{
+  transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease, background-color .18s ease;
+}
+.choice-card:hover,.date-item:hover,.metric-card:hover,.pillar-card:hover,.relation-item:hover,.gender-kua:hover,.formula-item:hover,.action-card:hover{
+  transform:translateY(-1px);
+  box-shadow:0 14px 30px rgba(15,23,42,.06) !important;
+  border-color:#cfd7e1 !important;
+}
+.advanced summary,.factor-details summary,.relation-more summary{transition:color .18s ease, background-color .18s ease}
+.advanced summary:hover,.factor-details summary:hover,.relation-more summary:hover{color:#234b7a;background:#f8fafc}
+
+/* Tarot visual improvement */
+.tarot-grid{gap:16px}
+.tarot-reading{position:relative;overflow:hidden}
+.tarot-reading::before{
+  content:"";position:absolute;inset:0;background:linear-gradient(135deg,rgba(35,75,122,.03),transparent 32%);
+  pointer-events:none;opacity:0;transition:opacity .24s ease;
+}
+.tarot-reading:hover::before{opacity:1}
+.tarot-card-face{
+  position:relative;
+  background:linear-gradient(180deg,#ffffff 0%,#f4f7fb 100%);
+}
+.tarot-card-face::after{
+  content:"";position:absolute;inset:10px;border-radius:12px;border:1px solid rgba(35,75,122,.07);pointer-events:none;
+}
+.tarot-art{display:inline-block;transform-origin:center center;transition:transform .35s ease, filter .35s ease}
+.tarot-state{color:#7a5a18;letter-spacing:.08em}
+.tarot-reading:hover .tarot-art{transform:translateY(-3px) scale(1.08);filter:drop-shadow(0 4px 12px rgba(35,75,122,.12))}
+.tarot-reading:hover .tarot-card-face.reversed .tarot-art{transform:rotate(180deg) translateY(-3px) scale(1.08)}
+.tarot-grid.is-dealing .tarot-reading{opacity:0;transform:translateY(28px) scale(.96)}
+.tarot-grid.is-dealing .tarot-reading.dealt{
+  animation:tarotDeal .56s cubic-bezier(.2,.8,.2,1) forwards;
+}
+.tarot-grid.is-dealing .tarot-reading.dealt .tarot-card-face{
+  animation:tarotFaceGlow .7s ease;
+}
+@keyframes tarotDeal{
+  0%{opacity:0;transform:translateY(28px) scale(.96)}
+  55%{opacity:1;transform:translateY(-3px) scale(1.01)}
+  100%{opacity:1;transform:translateY(0) scale(1)}
+}
+@keyframes tarotFaceGlow{
+  0%{box-shadow:0 0 0 rgba(35,75,122,0)}
+  35%{box-shadow:0 10px 28px rgba(35,75,122,.12)}
+  100%{box-shadow:none}
+}
+
+/* Other function enhancements */
+.badge,.spread-context span,.tag-row span,.session-code,.mini-btn,.score-badge{transition:background-color .18s ease, border-color .18s ease}
+.metric-card.primary-metric,.best-date-main{background:linear-gradient(180deg,#ffffff,#f7fafc)!important}
+.formula-item code{display:block;white-space:normal;word-break:break-word;line-height:1.65}
+.factor{align-items:flex-start}
+.factor>b{font-size:11px;min-width:34px;text-align:right}
+.date-main{align-items:flex-start}
+.score-badge{min-width:72px}
+.relation-more summary:after,.factor-details summary::after{font-size:14px}
+
+@media (max-width:760px){
+  .welcome-copy h1{font-size:32px}
+  .page-title h1{font-size:31px}
+  .tarot-name{font-size:20px}
+}
+
+
+/* v3.7 — more professional interface motion */
+body::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  background:
+    radial-gradient(circle at 10% 10%, rgba(35,75,122,.045), transparent 28%),
+    radial-gradient(circle at 85% 16%, rgba(35,75,122,.03), transparent 24%),
+    linear-gradient(rgba(255,255,255,.75), rgba(255,255,255,.75));
+  z-index:-2;
+}
+body::after{
+  content:"";
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  background-image:linear-gradient(rgba(24,34,48,.03) 1px, transparent 1px), linear-gradient(90deg, rgba(24,34,48,.03) 1px, transparent 1px);
+  background-size:32px 32px;
+  mask-image:radial-gradient(circle at center, rgba(0,0,0,.35), transparent 76%);
+  z-index:-1;
+}
+.topbar{
+  transition:height .22s ease, background-color .22s ease, box-shadow .22s ease, border-color .22s ease, transform .22s ease;
+}
+.topbar.scrolled{
+  height:72px;
+  background:rgba(255,255,255,.98);
+  box-shadow:0 10px 26px rgba(15,23,42,.06);
+}
+.brand,.profile-chip,.nav{transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease, background-color .18s ease}
+.nav{position:relative;overflow:hidden}
+.nav-link{position:relative;overflow:hidden}
+.nav-link::after{
+  content:"";position:absolute;left:14px;right:14px;bottom:6px;height:2px;border-radius:999px;background:#234b7a;
+  transform:scaleX(0);transform-origin:center;transition:transform .22s ease, opacity .22s ease;opacity:.8;
+}
+.nav-link:hover::after,.nav-link.active::after{transform:scaleX(1)}
+.brand:hover,.profile-chip:hover,.nav:hover{transform:translateY(-1px)}
+.profile-chip:hover{box-shadow:0 10px 24px rgba(15,23,42,.05)}
+.panel,.choice-card,.advanced,.date-item,.metric-card,.pillar-card,.relation-item,.gender-kua,.formula-item,.action-card,.guide-card,.quick-profile{
+  transition:transform .22s ease, box-shadow .22s ease, border-color .22s ease, background-color .22s ease;
+}
+.panel:hover,.choice-card:hover,.advanced:hover,.date-item:hover,.metric-card:hover,.pillar-card:hover,.relation-item:hover,.gender-kua:hover,.formula-item:hover,.action-card:hover,.guide-card:hover,.quick-profile:hover{
+  transform:translateY(-2px);
+  box-shadow:0 18px 40px rgba(15,23,42,.08) !important;
+  border-color:#cdd6df !important;
+}
+.logic-step{
+  transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+.logic-step:hover{transform:translateY(-1px);box-shadow:0 10px 24px rgba(15,23,42,.05);border-color:#d2dbe5}
+.btn,.mini-btn,.text-button{position:relative;overflow:hidden}
+.btn .ripple,.mini-btn .ripple,.nav-link .ripple{
+  position:absolute;border-radius:999px;transform:translate(-50%,-50%) scale(0);background:rgba(255,255,255,.38);pointer-events:none;
+  animation:rippleFx .7s ease-out forwards;
+}
+.btn.secondary .ripple,.btn.ghost .ripple,.mini-btn .ripple,.nav-link .ripple{background:rgba(35,75,122,.14)}
+@keyframes rippleFx{to{transform:translate(-50%,-50%) scale(1);opacity:0}}
+.view{opacity:0;transform:translateY(8px)}
+.view.active{animation:viewIn .34s cubic-bezier(.2,.8,.2,1) forwards}
+@keyframes viewIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.reveal{opacity:0;transform:translateY(18px)}
+.reveal.is-visible{transition:opacity .45s ease, transform .45s cubic-bezier(.2,.8,.2,1);opacity:1;transform:none}
+
+/* Tarot premium interactions */
+.tarot-grid{perspective:1200px}
+.tarot-reading{transform-style:preserve-3d}
+.tarot-card-face{
+  transform-style:preserve-3d;
+  transition:transform .22s ease, box-shadow .22s ease, border-color .22s ease, background .22s ease;
+  background:
+    radial-gradient(circle at var(--mx,50%) var(--my,18%), rgba(35,75,122,.10), transparent 35%),
+    linear-gradient(180deg,#ffffff 0%,#f4f7fb 100%);
+}
+.tarot-card-face::before{
+  content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:linear-gradient(135deg, rgba(255,255,255,.65), transparent 45%, rgba(35,75,122,.05) 100%);
+  opacity:.55;
+}
+.tarot-card-face::after{inset:10px;border-color:rgba(35,75,122,.08)}
+.tarot-reading:hover .tarot-card-face{box-shadow:0 22px 45px rgba(35,75,122,.10)}
+.tarot-roman,.tarot-name,.tarot-state,.tarot-art{position:relative;z-index:1}
+.tarot-art{transition:transform .22s ease, filter .22s ease}
+.tarot-reading:hover .tarot-art{filter:drop-shadow(0 8px 14px rgba(35,75,122,.14))}
+.tarot-grid.is-dealing .tarot-reading.dealt{animation:tarotDealPro .7s cubic-bezier(.22,.8,.2,1) forwards}
+.tarot-grid.is-dealing .tarot-reading.dealt .tarot-card-face{animation:tarotCardSettle .8s ease}
+@keyframes tarotDealPro{
+  0%{opacity:0;transform:translateY(36px) rotateX(10deg) scale(.94)}
+  40%{opacity:1;transform:translateY(-4px) rotateX(0deg) scale(1.01)}
+  100%{opacity:1;transform:translateY(0) scale(1)}
+}
+@keyframes tarotCardSettle{
+  0%{box-shadow:0 0 0 rgba(35,75,122,0)}
+  45%{box-shadow:0 18px 38px rgba(35,75,122,.12)}
+  100%{box-shadow:0 0 0 rgba(35,75,122,0)}
+}
+/* other function refinements */
+.advanced summary,
+.factor-details summary,
+.relation-more summary{transition:background-color .18s ease, color .18s ease}
+.advanced[open],.factor-details[open],.relation-more[open]{background:#fbfcfd}
+.advanced summary:hover,.factor-details summary:hover,.relation-more summary:hover{background:#f6f9fc}
+.metric-card.primary-metric,
+.best-date-main{background:linear-gradient(180deg,#ffffff,#f8fbfd)!important}
+.score-badge,
+.badge,
+.session-code,
+.spread-context span,
+.tag-row span{transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease}
+.date-item:hover .score-badge,.metric-card:hover .badge,.tarot-reading:hover .badge{transform:translateY(-1px)}
+@media (max-width:760px){
+  body::after{background-size:24px 24px;opacity:.7}
+  .topbar.scrolled{height:auto}
+}
+
+
+/* v3.8 — professional theme per function */
+body[data-view="home"]{background:linear-gradient(180deg,#f5f7fa 0%,#eef3f8 100%)}
+body[data-view="tarot"]{background:linear-gradient(180deg,#f4f1f8 0%,#eef1f8 100%)}
+body[data-view="fortune"]{background:linear-gradient(180deg,#f4f8f7 0%,#edf4f3 100%)}
+body[data-view="horoscope"]{background:linear-gradient(180deg,#f8f6f1 0%,#f2f1eb 100%)}
+body[data-view="dates"]{background:linear-gradient(180deg,#f4f8fb 0%,#edf3f7 100%)}
+.view{--accent:#234b7a;--accent-soft:rgba(35,75,122,.08);--accent-soft-2:rgba(35,75,122,.13);--accent-ink:#183a60;--accent-glow:rgba(35,75,122,.16)}
+#view-home{--accent:#234b7a;--accent-soft:rgba(35,75,122,.08);--accent-soft-2:rgba(35,75,122,.14);--accent-ink:#183a60;--accent-glow:rgba(35,75,122,.16)}
+#view-tarot{--accent:#6f4bb8;--accent-soft:rgba(111,75,184,.09);--accent-soft-2:rgba(111,75,184,.15);--accent-ink:#4f3886;--accent-glow:rgba(111,75,184,.18)}
+#view-fortune{--accent:#1f7b72;--accent-soft:rgba(31,123,114,.09);--accent-soft-2:rgba(31,123,114,.15);--accent-ink:#165e58;--accent-glow:rgba(31,123,114,.16)}
+#view-horoscope{--accent:#9b6a17;--accent-soft:rgba(155,106,23,.09);--accent-soft-2:rgba(155,106,23,.16);--accent-ink:#764e08;--accent-glow:rgba(155,106,23,.16)}
+#view-dates{--accent:#1e6694;--accent-soft:rgba(30,102,148,.09);--accent-soft-2:rgba(30,102,148,.15);--accent-ink:#164f73;--accent-glow:rgba(30,102,148,.16)}
+.view.active .page-title,
+.view.active .logic-strip,
+.view.active .primary-reading-card,
+.view.active .best-date-panel,
+.view.active .guide-card,
+.view.active .profile-banner,
+.view.active .analysis-panel,
+.view.active .padded,
+.view.active .advanced,
+.view.active .date-ranking-panel,
+.view.active .result-panel,
+.view.active .relation-panel,
+.view.active .gender-astro-panel,
+.view.active .gender-panel{
+  border-color:color-mix(in srgb, var(--accent) 18%, #dbe3ea);
+}
+.simple-page-title{
+  position:relative;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:24px;
+  align-items:start;
+  background:linear-gradient(135deg,#ffffff 0%, color-mix(in srgb, var(--accent) 4%, #ffffff) 100%);
+  border:1px solid color-mix(in srgb, var(--accent) 16%, #dfe5eb);
+  border-radius:24px;
+  padding:30px 32px;
+  box-shadow:0 18px 40px rgba(15,23,42,.05);
+  overflow:hidden;
+}
+.simple-page-title::before{
+  content:"";position:absolute;inset:auto -56px -56px auto;width:180px;height:180px;border-radius:50%;
+  background:radial-gradient(circle,var(--accent-soft-2),transparent 62%);
+}
+.simple-page-title::after{
+  content:"";position:absolute;left:32px;top:0;height:4px;width:110px;border-radius:999px;background:var(--accent);
+}
+.simple-page-title h1{max-width:840px;color:#182230}
+.simple-page-title p strong,.simple-page-title .eyebrow,.view.active .page-title .eyebrow{color:var(--accent-ink)}
+.simple-page-title .btn.secondary{
+  border-color:color-mix(in srgb, var(--accent) 18%, #d7dfe8);
+  color:var(--accent-ink);
+  background:linear-gradient(180deg,#ffffff, color-mix(in srgb, var(--accent) 5%, #f8fafc));
+}
+.view.active .logic-strip{
+  background:linear-gradient(180deg,#ffffff 0%, color-mix(in srgb, var(--accent) 4%, #ffffff) 100%);
+}
+.view.active .logic-step{
+  background:linear-gradient(180deg,#ffffff 0%, color-mix(in srgb, var(--accent) 4%, #fbfdff) 100%);
+  border-color:color-mix(in srgb, var(--accent) 18%, #dfe5eb);
+}
+.view.active .logic-step span,
+.view.active .step-dot,
+.view.active .choice-icon,
+.view.active .profile-symbol,
+.view.active .sigil,
+.view.active .empty-orb{
+  background:color-mix(in srgb, var(--accent) 12%, #eef2f7);
+  color:var(--accent-ink);
+}
+.view.active .logic-step strong,
+.view.active .guide-heading strong,
+.view.active .section-mini-head h3,
+.view.active .guide-heading small strong{color:#182230}
+.view.active .btn.primary{
+  background:linear-gradient(135deg,var(--accent), color-mix(in srgb, var(--accent) 78%, #ffffff));
+  border-color:transparent;
+}
+.view.active .btn.primary:hover{filter:brightness(.97)}
+.view.active .text-button,
+.view.active .mini-btn,
+.view.active .badge,
+.view.active .session-code strong,
+.view.active .choice-action,
+.view.active .factor-details summary,
+.view.active .relation-more summary{color:var(--accent-ink)}
+.view.active .guide-card{
+  background:linear-gradient(180deg,#ffffff 0%, color-mix(in srgb, var(--accent) 3%, #ffffff) 100%);
+  position:relative;
+}
+.view.active .guide-card::before,
+.view.active .best-date-panel::before,
+.view.active .primary-reading-card::before,
+.view.active .analysis-panel::before,
+.view.active .profile-banner::before{
+  content:"";position:absolute;left:0;right:0;top:0;height:4px;background:linear-gradient(90deg,var(--accent), color-mix(in srgb, var(--accent) 35%, #ffffff));
+}
+.view.active .result-panel,
+.view.active .padded,
+.view.active .advanced,
+.view.active .date-ranking-panel,
+.view.active .gender-panel,
+.view.active .relation-panel,
+.view.active .gender-astro-panel{
+  background:linear-gradient(180deg,#ffffff 0%, color-mix(in srgb, var(--accent) 2.5%, #ffffff) 100%);
+}
+.view.active .primary-reading-card,
+.view.active .best-date-panel,
+.view.active .analysis-panel,
+.view.active .profile-banner{
+  background:linear-gradient(180deg,#ffffff 0%, color-mix(in srgb, var(--accent) 4%, #ffffff) 100%) !important;
+}
+.view.active .badge,
+.view.active .spread-context span,
+.view.active .tag-row span,
+.view.active .session-code,
+.view.active .mini-btn,
+.view.active .score-badge,
+.view.active .simple-scale span{
+  border-color:color-mix(in srgb, var(--accent) 18%, #dfe5eb);
+  background:color-mix(in srgb, var(--accent) 4%, #ffffff);
+}
+.view.active .advanced summary:hover,
+.view.active .factor-details summary:hover,
+.view.active .relation-more summary:hover{background:color-mix(in srgb, var(--accent) 4%, #f7fafe)}
+.view.active .formula-item,
+.view.active .metric-card,
+.view.active .cycle-row,
+.view.active .date-item,
+.view.active .relation-item,
+.view.active .gender-kua,
+.view.active .pillar-card,
+.view.active .action-card,
+.view.active .sub-card{
+  background:linear-gradient(180deg,#ffffff 0%, color-mix(in srgb, var(--accent) 3%, #fbfdff) 100%);
+}
+.view.active .metric-card.primary-metric,
+.view.active .best-date-main{
+  background:linear-gradient(180deg,#ffffff 0%, color-mix(in srgb, var(--accent) 6%, #f8fbfd) 100%) !important;
+}
+.view.active .page-title button,
+.view.active .guide-card button,
+.view.active .best-date-panel button{box-shadow:0 10px 24px color-mix(in srgb, var(--accent) 14%, transparent)}
+
+/* Home overview */
+#view-home .welcome-card{
+  background:linear-gradient(135deg,#ffffff 0%, rgba(35,75,122,.04) 100%);
+  border-color:rgba(35,75,122,.14);
+}
+#view-home .choice-card:nth-child(1){border-top:3px solid #6f4bb8}
+#view-home .choice-card:nth-child(2){border-top:3px solid #1f7b72}
+#view-home .choice-card:nth-child(3){border-top:3px solid #9b6a17}
+#view-home .choice-card:nth-child(4){border-top:3px solid #1e6694}
+
+/* Tarot-specific professional mood */
+#view-tarot .simple-page-title .eyebrow::after{content:" • Trực giác"}
+#view-tarot .tarot-card-face{background:radial-gradient(circle at var(--mx,50%) var(--my,16%), rgba(111,75,184,.12), transparent 35%), linear-gradient(180deg,#ffffff 0%, #f6f3fc 100%)}
+#view-tarot .tarot-reading:hover .tarot-card-face{border-color:rgba(111,75,184,.22)}
+#view-tarot .analysis-panel{box-shadow:0 18px 36px rgba(111,75,184,.08)}
+#view-tarot .action-card{background:linear-gradient(180deg,#fbf8ff 0%, #f5f2fb 100%)}
+#view-tarot .spread-context span:first-child{background:rgba(111,75,184,.09)}
+
+/* Numerology-specific structure */
+#view-fortune .simple-page-title .eyebrow::after{content:" • Hệ thống"}
+#view-fortune .primary-reading-card{box-shadow:0 16px 34px rgba(31,123,114,.07)}
+#view-fortune .cycle-row strong{color:var(--accent-ink)}
+#view-fortune .metric-card strong{color:var(--accent-ink)}
+#view-fortune .metrics-grid .metric-card:nth-child(1),
+#view-fortune .metrics-grid .metric-card:nth-child(2),
+#view-fortune .metrics-grid .metric-card:nth-child(3){border-top:3px solid rgba(31,123,114,.28)}
+#view-fortune .formula-panel code{border-left:3px solid rgba(31,123,114,.18);padding-left:10px}
+
+/* Horoscope-specific tone */
+#view-horoscope .simple-page-title .eyebrow::after{content:" • Quan hệ"}
+#view-horoscope .profile-banner{box-shadow:0 18px 36px rgba(155,106,23,.07)}
+#view-horoscope .accent-card{border-top:3px solid rgba(155,106,23,.35)}
+#view-horoscope .relation-item strong,
+#view-horoscope .gender-kua>strong,
+#view-horoscope #elementTitle{color:var(--accent-ink)}
+#view-horoscope .relation-note{padding:12px 14px;border-radius:14px;background:rgba(155,106,23,.05);border:1px solid rgba(155,106,23,.10)}
+
+/* Dates-specific clarity */
+#view-dates .simple-page-title .eyebrow::after{content:" • Xếp hạng"}
+#view-dates .best-date-grid{grid-template-columns:1.4fr 1fr 1fr 1fr}
+#view-dates .best-date-panel{box-shadow:0 18px 36px rgba(30,102,148,.08)}
+#view-dates .date-item{border-left:4px solid transparent}
+#view-dates .date-item:first-child{border-left-color:rgba(30,102,148,.55)}
+#view-dates .score-badge.good,#view-dates .score-badge.excellent{background:rgba(30,102,148,.08)}
+#view-dates .simple-scale{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:14px}
+#view-dates .simple-scale span{padding:10px 12px;border-radius:12px;font-size:11px;color:#4b5d70}
+#view-dates .factor.plus b:last-child{color:#177d5b}
+#view-dates .factor.minus b:last-child{color:#b64c5f}
+
+/* shared enhanced motion */
+.view.active .page-title,
+.view.active .logic-strip,
+.view.active .guide-card,
+.view.active .result-panel,
+.view.active .analysis-panel,
+.view.active .primary-reading-card,
+.view.active .best-date-panel,
+.view.active .date-ranking-panel,
+.view.active .profile-banner{
+  animation:sectionIn .4s cubic-bezier(.2,.8,.2,1);
+}
+@keyframes sectionIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.view.active .badge:hover,
+.view.active .spread-context span:hover,
+.view.active .tag-row span:hover,
+.view.active .mini-btn:hover{transform:translateY(-1px);box-shadow:0 10px 20px var(--accent-glow)}
+@media (max-width:980px){
+  .simple-page-title{grid-template-columns:1fr;padding:24px 22px}
+  #view-dates .best-date-grid{grid-template-columns:1fr 1fr}
+}
+@media (max-width:760px){
+  .simple-page-title{padding:22px 18px;border-radius:18px}
+  .simple-page-title::before{width:120px;height:120px;right:-28px;bottom:-28px}
+  #view-dates .simple-scale{grid-template-columns:1fr}
+  #view-dates .best-date-grid{grid-template-columns:1fr}
+}
+
+
+/* v3.9 — inspired-by-professional-sites refinement */
+body{
+  --site-accent:#234b7a;
+  --site-accent-soft:rgba(35,75,122,.08);
+  --site-accent-strong:rgba(35,75,122,.14);
+}
+body[data-view="home"]{--site-accent:#234b7a;--site-accent-soft:rgba(35,75,122,.08);--site-accent-strong:rgba(35,75,122,.14)}
+body[data-view="tarot"]{--site-accent:#6f4bb8;--site-accent-soft:rgba(111,75,184,.10);--site-accent-strong:rgba(111,75,184,.16)}
+body[data-view="fortune"]{--site-accent:#1f7b72;--site-accent-soft:rgba(31,123,114,.10);--site-accent-strong:rgba(31,123,114,.16)}
+body[data-view="horoscope"]{--site-accent:#9b6a17;--site-accent-soft:rgba(155,106,23,.10);--site-accent-strong:rgba(155,106,23,.16)}
+body[data-view="dates"]{--site-accent:#1e6694;--site-accent-soft:rgba(30,102,148,.10);--site-accent-strong:rgba(30,102,148,.16)}
+.topbar{border-bottom-color:color-mix(in srgb, var(--site-accent) 10%, #dde3ea)}
+.brand-seal{background:linear-gradient(135deg,var(--site-accent), color-mix(in srgb, var(--site-accent) 72%, #ffffff))}
+.nav-link.active{background:color-mix(in srgb, var(--site-accent) 10%, #f4f7fa);color:color-mix(in srgb, var(--site-accent) 78%, #162333)}
+.nav-link:hover{background:color-mix(in srgb, var(--site-accent) 6%, #f4f7fa);color:color-mix(in srgb, var(--site-accent) 72%, #162333)}
+.nav-link::after{background:var(--site-accent)}
+.profile-chip .avatar{background:color-mix(in srgb, var(--site-accent) 10%, #edf2f7);color:color-mix(in srgb, var(--site-accent) 75%, #29496e)}
+
+.simple-page-title{padding:32px 32px 26px}
+.function-cues{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px;position:relative;z-index:1}
+.function-cues .cue{
+  display:inline-flex;align-items:center;gap:8px;padding:9px 12px;border-radius:999px;
+  background:color-mix(in srgb, var(--accent) 6%, #ffffff);border:1px solid color-mix(in srgb, var(--accent) 16%, #d9e1e8);
+  color:var(--accent-ink);font-size:12px;font-weight:700;letter-spacing:.01em;
+}
+.function-cues .cue::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 5px color-mix(in srgb, var(--accent) 12%, transparent)}
+.view.active .simple-page-title{
+  box-shadow:0 24px 48px rgba(15,23,42,.06), inset 0 1px 0 rgba(255,255,255,.65);
+}
+.view.active .simple-page-title p{max-width:860px}
+
+/* stronger per-function hero systems */
+#view-tarot .simple-page-title{background:linear-gradient(135deg,#ffffff 0%, rgba(111,75,184,.045) 100%)}
+#view-tarot .guide-card,
+#view-tarot .result-panel,
+#view-tarot .analysis-panel{box-shadow:0 18px 36px rgba(111,75,184,.07)}
+#view-tarot .guide-card::after,
+#view-tarot .analysis-panel::after{
+  content:"";position:absolute;right:-28px;bottom:-34px;width:120px;height:120px;border-radius:50%;
+  background:radial-gradient(circle, rgba(111,75,184,.12), transparent 65%);pointer-events:none;
+}
+#view-tarot .tarot-card-face{border-width:1px;border-style:solid;border-color:rgba(111,75,184,.16)}
+#view-tarot .tarot-reading:hover{transform:translateY(-3px)}
+#view-tarot .tarot-reading:hover .tarot-card-face{box-shadow:0 22px 42px rgba(111,75,184,.12)}
+#view-tarot .action-card li{position:relative;padding-left:4px}
+#view-tarot .action-card li::marker{color:#6f4bb8}
+
+#view-fortune .simple-page-title{background:linear-gradient(135deg,#ffffff 0%, rgba(31,123,114,.04) 100%)}
+#view-fortune .primary-reading-card,
+#view-fortune .padded,
+#view-fortune .advanced{box-shadow:0 16px 34px rgba(31,123,114,.06)}
+#view-fortune .metrics-grid .metric-card{position:relative;overflow:hidden}
+#view-fortune .metrics-grid .metric-card::before{
+  content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:linear-gradient(180deg,#1f7b72,rgba(31,123,114,.24));
+}
+#view-fortune .cycle-row{border-left:3px solid rgba(31,123,114,.25)}
+#view-fortune .formula-item{background:linear-gradient(180deg,#ffffff 0%, rgba(31,123,114,.03) 100%)}
+
+#view-horoscope .simple-page-title{background:linear-gradient(135deg,#ffffff 0%, rgba(155,106,23,.045) 100%)}
+#view-horoscope .profile-banner,
+#view-horoscope .relation-panel,
+#view-horoscope .gender-astro-panel{box-shadow:0 18px 36px rgba(155,106,23,.06)}
+#view-horoscope .pillar-card{position:relative;overflow:hidden}
+#view-horoscope .pillar-card::after{
+  content:"";position:absolute;right:12px;top:12px;width:42px;height:42px;border-radius:50%;
+  background:radial-gradient(circle, rgba(155,106,23,.10), transparent 70%);
+}
+#view-horoscope .relation-item{border-left:3px solid rgba(155,106,23,.22)!important}
+#view-horoscope .gender-kua.active{box-shadow:0 14px 30px rgba(155,106,23,.08)!important;border-color:rgba(155,106,23,.24)!important}
+
+#view-dates .simple-page-title{background:linear-gradient(135deg,#ffffff 0%, rgba(30,102,148,.045) 100%)}
+#view-dates .guide-card,
+#view-dates .best-date-panel,
+#view-dates .date-ranking-panel{box-shadow:0 18px 36px rgba(30,102,148,.06)}
+#view-dates .best-date-main{position:relative;overflow:hidden}
+#view-dates .best-date-main::after{
+  content:"";position:absolute;inset:auto -28px -28px auto;width:96px;height:96px;border-radius:50%;background:radial-gradient(circle, rgba(30,102,148,.14), transparent 65%);
+}
+#view-dates .date-item{transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease, background-color .18s ease}
+#view-dates .date-item:hover{transform:translateY(-2px)}
+#view-dates .date-info strong{display:block;margin-bottom:4px}
+#view-dates .score-badge{min-width:86px;display:grid;place-items:center}
+#view-dates .factor-details[open]{background:linear-gradient(180deg,#fbfdff 0%, rgba(30,102,148,.03) 100%)}
+
+/* home refined like landing sections */
+#view-home .choice-card{background:linear-gradient(180deg,#ffffff 0%, #fbfcfd 100%)}
+#view-home .choice-card .choice-action{opacity:.88}
+#view-home .choice-card:hover .choice-action{transform:translateX(2px)}
+#view-home .welcome-actions .btn.primary{box-shadow:0 14px 28px rgba(35,75,122,.10)}
+
+/* polished details */
+.guide-card .big-action{margin-top:8px}
+.section-title-simple h2,.section-mini-head h3,.guide-heading strong,.choice-body strong,.best-date-panel h2{letter-spacing:-.01em}
+.badge,.spread-context span,.tag-row span,.session-code,.mini-btn,.score-badge,.simple-scale span,.function-cues .cue{backdrop-filter:blur(12px)}
+.advanced[open] summary{background:linear-gradient(180deg,#ffffff 0%, rgba(24,34,48,.018) 100%)}
+.advanced-body{background:linear-gradient(180deg,#ffffff 0%, rgba(248,250,252,.9) 100%)}
+@media (max-width:760px){
+  .function-cues{gap:8px}
+  .function-cues .cue{font-size:11px;padding:8px 11px}
+}
+
+
+/* v4.0 — function-specific layout refinement and richer professional effects */
+:root{--content-max:1240px}
+.shell{width:min(var(--content-max),calc(100% - 40px));padding-top:30px}
+.main-result-column{display:grid;gap:18px}
+.guided-layout{display:grid;grid-template-columns:360px minmax(0,1fr);gap:20px;align-items:start}
+.guide-card{position:sticky;top:96px;align-self:start}
+.deep-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:18px;align-items:start}
+.formula-list,.element-bars,.relation-list,.cycle-stack,.date-list{display:grid;gap:14px}
+.advanced-body{padding:20px}
+
+/* stronger section choreography */
+.view.active .simple-page-title{animation:heroLift .45s cubic-bezier(.2,.8,.2,1)}
+.view.active .logic-strip{animation:heroLift .5s cubic-bezier(.2,.8,.2,1)}
+.view.active .guided-layout,.view.active .friendly-cols,.view.active .astro-core-grid,.view.active .pillar-grid{animation:fadeGrid .52s cubic-bezier(.2,.8,.2,1)}
+@keyframes heroLift{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+@keyframes fadeGrid{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+/* Tarot: immersive and elegant */
+#view-tarot .guided-layout{grid-template-columns:370px minmax(0,1fr)}
+#view-tarot .guide-card{background:linear-gradient(180deg,#ffffff 0%, #faf7ff 100%);box-shadow:0 20px 44px rgba(111,75,184,.08)}
+#view-tarot .guide-card::after{
+  content:"";position:absolute;inset:auto 18px 18px auto;width:88px;height:88px;border-radius:50%;
+  background:radial-gradient(circle, rgba(111,75,184,.13), transparent 68%);pointer-events:none;
+}
+#view-tarot .guide-card .big-action{box-shadow:0 16px 28px rgba(111,75,184,.18)}
+#view-tarot .result-panel{background:linear-gradient(180deg,#ffffff 0%, #faf8ff 100%);overflow:hidden}
+#view-tarot .result-panel::before,
+#view-tarot .analysis-panel::before{
+  background:linear-gradient(90deg,#6f4bb8,#9f7be8) !important;
+}
+#view-tarot .tarot-grid{grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px}
+#view-tarot .tarot-reading{background:linear-gradient(180deg,#ffffff 0%, #fbf8ff 100%);border-radius:18px;border:1px solid rgba(111,75,184,.12)}
+#view-tarot .tarot-reading:hover{transform:translateY(-4px)}
+#view-tarot .tarot-card-face{min-height:295px}
+#view-tarot .session-code{background:rgba(111,75,184,.06)}
+#view-tarot .deep-grid{grid-template-columns:1.35fr .85fr}
+#view-tarot .analysis-copy{font-size:14px;line-height:1.9}
+#view-tarot .action-card{position:relative;overflow:hidden}
+#view-tarot .action-card::before{content:"";position:absolute;inset:0 0 auto 0;height:4px;background:linear-gradient(90deg,#6f4bb8,#a485eb)}
+
+/* Fortune: dashboard logic */
+#view-fortune .friendly-cols{grid-template-columns:1.2fr .8fr;align-items:stretch}
+#view-fortune .primary-reading-card{padding:24px 26px;background:linear-gradient(180deg,#ffffff 0%, #f8fcfb 100%)}
+#view-fortune .cycle-stack{grid-template-columns:repeat(3,minmax(0,1fr))}
+#view-fortune .cycle-row{padding:16px 18px;background:linear-gradient(180deg,#ffffff 0%, #f7fcfb 100%)}
+#view-fortune .metrics-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+#view-fortune .metric-card{min-height:150px;padding:20px 18px}
+#view-fortune .advanced{overflow:hidden}
+#view-fortune .advanced summary{padding:20px 22px}
+#view-fortune .advanced-body{background:linear-gradient(180deg,#ffffff 0%, #f8fcfb 100%)}
+#view-fortune .formula-list{grid-template-columns:repeat(2,minmax(0,1fr))}
+#view-fortune .formula-item{min-height:100%}
+
+/* Horoscope: structured relationships */
+#view-horoscope .friendly-pillars{grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+#view-horoscope .pillar-card{min-height:190px;display:flex;flex-direction:column;justify-content:space-between}
+#view-horoscope .astro-core-grid{grid-template-columns:1.05fr .95fr;align-items:start}
+#view-horoscope .relation-list{grid-template-columns:1fr;gap:12px}
+#view-horoscope .relation-item{position:relative;padding-left:18px !important}
+#view-horoscope .relation-item::before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:4px;border-radius:999px;background:rgba(155,106,23,.24)}
+#view-horoscope .gender-compare{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+#view-horoscope .gender-kua.active{position:relative}
+#view-horoscope .gender-kua.active::after{content:"Đang dùng";position:absolute;top:12px;right:12px;font-size:10px;font-weight:700;color:#764e08;background:rgba(155,106,23,.08);padding:5px 8px;border-radius:999px}
+#view-horoscope .advanced-two-col{grid-template-columns:1.1fr .9fr}
+#view-horoscope .sub-card{padding:20px;border-radius:16px}
+
+/* Dates: decision-centric ranking */
+#view-dates .date-guided{grid-template-columns:350px minmax(0,1fr)}
+#view-dates .guide-card{background:linear-gradient(180deg,#ffffff 0%, #f7fbfe 100%);box-shadow:0 20px 42px rgba(30,102,148,.07)}
+#view-dates .best-date-panel{padding:24px 24px 20px;background:linear-gradient(180deg,#ffffff 0%, #f7fbfe 100%)}
+#view-dates .best-date-grid{gap:12px;background:transparent;border:none}
+#view-dates .best-date-grid>div{border:1px solid rgba(30,102,148,.13);border-radius:16px;padding:18px;background:linear-gradient(180deg,#ffffff 0%, #f8fbfe 100%)}
+#view-dates .best-date-main{grid-column:span 1;min-height:122px}
+#view-dates .date-ranking-panel{padding:22px;background:linear-gradient(180deg,#ffffff 0%, #f9fcff 100%)}
+#view-dates .date-list{gap:12px}
+#view-dates .date-item{padding:16px 16px 14px;border-radius:18px;border:1px solid rgba(30,102,148,.12);background:linear-gradient(180deg,#ffffff 0%, #fbfdff 100%)}
+#view-dates .date-item:hover{box-shadow:0 16px 32px rgba(30,102,148,.08)}
+#view-dates .date-main{grid-template-columns:88px 1fr auto;gap:16px;align-items:start}
+#view-dates .date-cal{background:linear-gradient(180deg,#f8fbff 0%, #eef6fd 100%);border:1px solid rgba(30,102,148,.10)}
+#view-dates .score-badge{background:linear-gradient(180deg,#ffffff 0%, #f3faff 100%)}
+#view-dates .factor-details{padding-top:14px}
+#view-dates .factor{padding:10px 0;border-bottom:1px dashed rgba(30,102,148,.10)}
+#view-dates .factor:last-child{border-bottom:0}
+
+/* home: cleaner navigation to functions */
+#view-home .choice-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+#view-home .choice-card{padding:22px 22px 20px;border-radius:18px;min-height:132px;display:grid;grid-template-columns:54px 1fr auto;gap:16px;align-items:start}
+#view-home .choice-card .choice-body small{display:block;margin-top:5px}
+#view-home .simple-how{margin-top:24px}
+
+/* micro polishing */
+.field-pair{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.full{width:100%}
+.big-action{min-height:48px}
+.compact-title{margin:26px 0 14px}
+.advanced summary span small{display:block;margin-top:3px}
+.modal{max-width:760px}
+footer{width:min(var(--content-max),calc(100% - 40px))}
+
+@media (max-width:1100px){
+  .guided-layout,#view-tarot .guided-layout,#view-dates .date-guided{grid-template-columns:1fr}
+  .guide-card{position:static}
+  #view-home .choice-grid{grid-template-columns:1fr 1fr}
+  #view-fortune .cycle-stack,#view-fortune .metrics-grid,#view-horoscope .friendly-pillars{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #view-horoscope .astro-core-grid,#view-fortune .friendly-cols,.deep-grid,#view-horoscope .advanced-two-col{grid-template-columns:1fr}
+}
+@media (max-width:760px){
+  .shell{width:min(100% - 20px,var(--content-max));padding-top:20px}
+  #view-home .choice-grid{grid-template-columns:1fr}
+  #view-home .choice-card{grid-template-columns:46px 1fr;gap:14px}
+  #view-home .choice-card .choice-action{grid-column:2}
+  .field-pair,.deep-grid,#view-fortune .friendly-cols,#view-fortune .cycle-stack,#view-fortune .metrics-grid,#view-fortune .formula-list,#view-horoscope .friendly-pillars,#view-horoscope .gender-compare,#view-horoscope .advanced-two-col{grid-template-columns:1fr}
+  #view-dates .best-date-grid>div{padding:16px}
+  #view-dates .date-main{grid-template-columns:72px 1fr}
+  #view-dates .score-badge{grid-column:1 / -1;justify-self:start;margin-top:6px}
+}

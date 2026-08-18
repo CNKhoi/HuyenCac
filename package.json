@@ -1,0 +1,9 @@
+{
+  "name": "huyen-cac-v5-1-modular",
+  "version": "5.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node tests/model-smoke.mjs"
+  }
+}

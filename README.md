@@ -1,19 +1,57 @@
-# Huyền Các v3.3
+# Huyền Các v5.1 — Modular Architecture
 
-Bản v3.3 tập trung vào khả năng sử dụng cho người không chuyên.
+Bản này giữ nguyên chức năng của v5.0 nhưng tách dự án thành nhiều module có trách nhiệm rõ ràng.
 
-## Thay đổi giao diện chính
-- Trang chủ chỉ còn 2 bước: tạo hồ sơ → chọn một trong 4 chức năng.
-- Mỗi chức năng chỉ có một hành động chính và một khu vực kết quả chính.
-- Các phần kỹ thuật/công thức được chuyển vào mục “Xem chi tiết”.
-- Tarot: chọn cách xem → xem kết quả; Auto là lựa chọn mặc định dễ dùng nhất.
-- Xem bói: phần tổng hợp đặt trước; 8 chỉ số và công thức được thu gọn.
-- Tử vi: thông tin cơ bản → tóm tắt → Tam hợp/đối xung → Cung phi Nam/Nữ; Ngũ hành và cung hoàng đạo nằm trong phần mở rộng.
-- Xem ngày: chỉ hiện điểm và kết luận trước; bảng cộng/trừ điểm của từng ngày chỉ mở khi người dùng yêu cầu.
-- Chữ, khoảng cách và nút thao tác được tăng kích thước để dễ đọc hơn.
+## Deploy lên GitHub Pages
 
-## Chạy
-Mở trực tiếp `index.html` bằng trình duyệt hiện đại hoặc chạy bằng local web server.
+Đây là SPA static thuần HTML/CSS/JavaScript, **không có database, backend hoặc bước build bắt buộc**. Chỉ cần upload toàn bộ cấu trúc thư mục lên repository GitHub.
 
-## Lưu ý
-Tarot/tử vi là nội dung tham khảo, văn hóa và tự chiêm nghiệm. Không thay thế tư vấn chuyên môn.
+Trong GitHub: **Settings → Pages → Build and deployment → Deploy from a branch**, chọn branch chứa source (thường là `main`) và thư mục `/ (root)`.
+
+File `.nojekyll` đã được giữ sẵn để GitHub Pages phục vụ trực tiếp cấu trúc static của dự án.
+
+## Cấu trúc
+
+```text
+Huyen_Cac_v5_1_Modular/
+├─ index.html                  # SPA shell / markup
+├─ manifest.webmanifest        # PWA metadata
+├─ sw.js                       # cache static assets
+├─ package.json
+├─ assets/
+│  ├─ css/
+│  │  ├─ tokens.css            # palette / design tokens
+│  │  ├─ components.css        # button, panel, form, chip...
+│  │  ├─ layout.css            # topbar + SPA shell
+│  │  ├─ motion.css            # modal + animation
+│  │  ├─ responsive.css
+│  │  └─ features/
+│  │     ├─ home.css
+│  │     ├─ shared.css
+│  │     ├─ tarot.css
+│  │     ├─ numerology.css
+│  │     ├─ horoscope.css
+│  │     └─ dates.css
+│  └─ js/
+│     ├─ app.js                # entry point
+│     ├─ data/                 # constants
+│     ├─ utils/                # format helpers
+│     ├─ models/               # pure business logic, NO DOM
+│     ├─ state/                # AppState
+│     ├─ config/               # FeatureConfig
+│     ├─ views/                # UI rendering
+│     ├─ controllers/          # event delegation / orchestration
+│     └─ services/             # service worker client
+├─ tests/
+│  └─ model-smoke.mjs
+└─ docs/
+   └─ architecture.md
+```
+
+## Test logic
+
+```bash
+npm test
+```
+
+Không cần cài package ngoài.
