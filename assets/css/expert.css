@@ -1,0 +1,52 @@
+/* =========================================================
+   v5.4 — READABILITY + EXPERT ANALYSIS
+   Larger typography, clearer hierarchy, long-form expert reports
+   ========================================================= */
+:root{--reading-max:980px}
+body{font-size:17px;line-height:1.78;letter-spacing:.002em}
+.eyebrow{font-size:12px;letter-spacing:.16em}
+h1{font-size:clamp(44px,5.1vw,72px);line-height:1.08;margin:12px 0 20px}
+h2{font-size:clamp(32px,3vw,40px);line-height:1.18}
+h3{font-size:clamp(25px,2.2vw,30px);line-height:1.28}
+.page-hero p,.hero p{font-size:16px;line-height:1.8;max-width:900px}
+.btn{font-size:14px;min-height:50px;padding:13px 20px}.badge,.chip{font-size:11.5px;padding:8px 12px}
+.nav-link{font-size:14px}.profile-chip strong{font-size:14px}.profile-chip small{font-size:11px}
+.form-field>span{font-size:12px}.form-field input,.form-field select,.form-field textarea,input,select,textarea{font-size:15px}
+.notice{font-size:13px;line-height:1.7}
+.logic-step{padding:15px}.logic-step span{width:34px;height:34px;font-size:12px}.logic-step strong{font-size:14px;line-height:1.45}.logic-step p{font-size:12px;line-height:1.6;margin-top:4px}
+.guide-title strong{font-size:16px}.guide-title small{font-size:12px;line-height:1.5}.guide-card{padding:24px}
+.section-head p{font-size:14px}.result-panel{padding:26px}.result-head h2{font-size:30px}
+.session-code small{font-size:10px}.session-code strong{font-size:12px}
+.empty-state p{font-size:13px;line-height:1.7}.empty-state h3{font-size:25px}
+
+/* Long-form expert report */
+.reading,.analysis-copy{font-size:15.5px;line-height:1.95;color:#d8d1c7;max-width:none}
+.reading strong,.analysis-copy strong{color:#f5eee2;font-weight:700}
+.expert-report{display:grid;gap:14px;width:100%;max-width:var(--reading-max)}
+.expert-section{position:relative;padding:18px 20px;border:1px solid rgba(var(--accent-rgb),.12);border-radius:16px;background:linear-gradient(180deg,rgba(var(--accent-rgb),.045),rgba(255,255,255,.018));overflow:hidden}
+.expert-section::before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:3px;border-radius:0 999px 999px 0;background:rgba(var(--accent-rgb),.48)}
+.expert-section.expert-lead{padding:22px 22px;background:linear-gradient(135deg,rgba(var(--accent-rgb),.10),rgba(255,255,255,.02));border-color:rgba(var(--accent-rgb),.22);box-shadow:0 14px 34px rgba(var(--accent-rgb),.05)}
+.expert-section.expert-caution{background:linear-gradient(180deg,rgba(209,175,111,.055),rgba(255,255,255,.018));border-color:rgba(209,175,111,.16)}
+.expert-kicker{display:block;margin-bottom:7px;color:var(--accent);font-size:10.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase}
+.expert-section h4{font-family:"Playfair Display",Georgia,serif;font-size:20px;line-height:1.35;color:#f4ede2;margin:0 0 8px;letter-spacing:-.01em}
+.expert-section p{font-size:15px;line-height:1.9;color:#cfc8be;margin:0}
+.compact-expert{max-width:none;margin-top:16px}.compact-expert .expert-section{padding:16px 18px}.compact-expert .expert-section h4{font-size:18px}.compact-expert .expert-section p{font-size:14px}
+.analysis-note{font-size:12.5px!important;line-height:1.75!important;color:#aaa69f!important}
+
+/* Tarot readability */
+.tarot-position{font-size:10.5px;letter-spacing:.13em;margin-bottom:10px}.card-roman{font-size:12px}.card-name{font-size:22px;line-height:1.22}.card-state{font-size:10px}.tarot-meaning{padding:15px 4px 4px}.tarot-meaning strong{font-size:14px}.tarot-meaning p{font-size:13px;line-height:1.78;margin-top:7px}.pattern-card{padding:17px}.pattern-card small{font-size:10px}.pattern-card strong{font-size:18px}.pattern-card p{font-size:12px;line-height:1.7}.analysis-copy h4{font-size:15px;line-height:1.45;margin:20px 0 8px}.action-card{padding:20px}.action-card small{font-size:11px}.action-card li{font-size:13.5px;line-height:1.8;margin:9px 0}.deep-grid{grid-template-columns:minmax(0,1.45fr) minmax(290px,.55fr)}
+
+/* Numerology readability */
+.primary-reading{padding:28px}.cycle-card{padding:18px}.cycle-card>b{font-size:27px}.cycle-card strong{font-size:14px}.cycle-card p{font-size:12.5px;line-height:1.7}.metric-card{padding:19px}.metric-card small{font-size:10.5px}.metric-card strong{font-size:16px;line-height:1.35}.metric-card p{font-size:12.5px;line-height:1.65}.donut{width:76px;height:76px}.donut b{font-size:22px}.insight-card{padding:18px}.insight-card small{font-size:10.5px}.insight-card strong{font-size:18px}.insight-card p{font-size:12.5px;line-height:1.7}.axis-meta{font-size:12px}.axis-row p{font-size:12px;line-height:1.65}.formula-item b{font-size:12px}.formula-item code{font-size:12px;line-height:1.7}
+
+/* Horoscope readability */
+.profile-banner h2{font-size:34px}.profile-banner p{font-size:14px}.pillar-card{padding:20px}.pillar-card>small{font-size:10.5px}.pillar-card>strong{font-size:25px}.pillar-card>span{font-size:12px}.pillar-card p{font-size:12.5px;line-height:1.7}.relation-label{font-size:10.5px}.relation-item strong{font-size:14px}.relation-item p{font-size:12.5px;line-height:1.7}.gender-kua strong{font-size:15px}.gender-kua p,.gender-kua small{font-size:12px;line-height:1.65}.matrix-card small{font-size:10px}.matrix-card strong{font-size:16px}.matrix-card span{font-size:11px}.matrix-card p{font-size:12px;line-height:1.7}.element-row{font-size:12px}.element-row b{font-size:12px}
+
+/* Dates readability */
+.best-cell small{font-size:10.5px}.best-cell strong{font-size:27px}.best-cell span{font-size:12px}.top3-card small{font-size:10px}.top3-card strong{font-size:25px}.top3-card span{font-size:12px}.top3-card b{font-size:15px}.distribution-row>span{font-size:11px}.date-cal small{font-size:10px}.date-cal strong{font-size:24px}.date-info strong{font-size:13.5px}.date-info p{font-size:12px;line-height:1.65}.score strong{font-size:18px}.score small{font-size:9px}.factor-details summary{font-size:12px;padding:12px 14px}.factor span{font-size:11.5px;line-height:1.65}.factor>b{font-size:12px}.simple-scale span{font-size:11.5px}
+
+/* Home */
+.hero-copy p{font-size:16px;line-height:1.85}.feature-heading p{font-size:14px;line-height:1.7}.feature-card small{font-size:10px}.feature-card strong{font-size:23px}.feature-card p{font-size:13px;line-height:1.7}.feature-card b{font-size:12.5px}.quick-profile small{font-size:10.5px}.quick-profile strong{font-size:19px}.quick-profile p{font-size:12px}.quick-stats small{font-size:10px}.quick-stats strong{font-size:14px}
+
+@media(max-width:900px){body{font-size:16px}.deep-grid{grid-template-columns:1fr}.expert-report{max-width:none}.page-hero p,.hero p{font-size:15px}.reading,.analysis-copy{font-size:15px}.expert-section p{font-size:14.5px}}
+@media(max-width:600px){body{font-size:16px}h1{font-size:38px}h2{font-size:30px}h3{font-size:24px}.page-hero p,.hero p{font-size:14px}.expert-section{padding:16px}.expert-section h4{font-size:18px}.expert-section p{font-size:14px}.reading,.analysis-copy{font-size:14.5px}.tarot-meaning p{font-size:12.5px}.action-card li{font-size:13px}}

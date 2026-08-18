@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0d1320">
-<meta name="description" content="Huyền Các — Tarot, Thần số học, Tử vi và Xem ngày với trải nghiệm Modern Mysticism cao cấp.">
-<title>Huyền Các v5.2 — Deep Analysis & 3D Experience</title>
+<meta name="description" content="Huyền Các — Tarot, Thần số học, Tử vi, Xem độ hợp và Xem ngày với trải nghiệm Modern Mysticism cao cấp.">
+<title>Huyền Các v5.7.1 — Human Reading & Compact Dates</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -18,10 +18,13 @@
 <link rel="stylesheet" href="assets/css/features/tarot.css">
 <link rel="stylesheet" href="assets/css/features/numerology.css">
 <link rel="stylesheet" href="assets/css/features/horoscope.css">
+<link rel="stylesheet" href="assets/css/features/compatibility.css">
 <link rel="stylesheet" href="assets/css/features/dates.css">
 <link rel="stylesheet" href="assets/css/motion.css">
 <link rel="stylesheet" href="assets/css/responsive.css">
-<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="assets/css/expert.css">
+<link rel="stylesheet" href="assets/css/ux-v55.css">
+<!-- Manifest chỉ được gắn khi chạy qua http/https để file:// không phát sinh lỗi. -->
 </head>
 <body data-view="home">
 
@@ -39,6 +42,8 @@
   <symbol id="i-moon" viewBox="0 0 24 24"><path d="M19 15.5A8 8 0 0 1 8.5 5a8 8 0 1 0 10.5 10.5Z"/></symbol>
   <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M14 7l5 5-5 5"/></symbol>
   <symbol id="i-compass" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2.2 4.8-4.8 2.2 2.2-4.8z"/></symbol>
+  <symbol id="i-compatibility" viewBox="0 0 24 24"><circle cx="8.2" cy="10" r="4.7"/><circle cx="15.8" cy="10" r="4.7"/><path d="M5.3 17.8c1.8-2.2 4-3.3 6.7-3.3s4.9 1.1 6.7 3.3"/><path d="m12 7.2.8 1.9 2 .2-1.5 1.3.5 2-1.8-1-1.8 1 .5-2-1.5-1.3 2-.2z"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 10v6M12 7.2h.01"/></symbol>
 </svg>
 
 <header class="topbar" id="topbar">
@@ -51,6 +56,7 @@
     <button class="nav-link" data-action="view" data-view="tarot">Tarot</button>
     <button class="nav-link" data-action="view" data-view="fortune">Xem bói</button>
     <button class="nav-link" data-action="view" data-view="horoscope">Tử vi</button>
+    <button class="nav-link" data-action="view" data-view="compatibility">Độ hợp</button>
     <button class="nav-link" data-action="view" data-view="dates">Xem ngày</button>
   </nav>
   <button class="profile-chip" data-action="profile-open">
@@ -60,13 +66,18 @@
 </header>
 
 <main class="shell">
+  <aside class="global-reference panel" aria-label="Lưu ý quan trọng">
+    <span class="reference-icon"><svg class="icon"><use href="#i-info"/></svg></span>
+    <div><strong>Mọi kết quả chỉ là thông tin tham khảo.</strong><p>Các phép tính Tarot, Thần số học, Can Chi, độ hợp và xem ngày không quyết định con người, tương lai hay chất lượng một mối quan hệ. Kết quả thực tế luôn phụ thuộc vào <b>chính mỗi người</b>: giá trị sống, hành vi, giao tiếp, nỗ lực, ranh giới, hoàn cảnh và trách nhiệm với lựa chọn của mình.</p></div>
+  </aside>
+
   <!-- HOME -->
   <section class="view active" id="view-home">
     <section class="hero panel panel-accent reveal">
       <div class="hero-copy">
         <span class="eyebrow">Không gian chiêm nghiệm cá nhân</span>
         <h1>Một hồ sơ.<br>Nhiều lớp góc nhìn.</h1>
-        <p>Tarot, Thần số học, Can Chi, Cung phi và tra ngày được tổ chức thành một trải nghiệm thống nhất — ưu tiên kết quả dễ hiểu trước, chi tiết chuyên sâu sau.</p>
+        <p>Tarot, Thần số học, Can Chi, đối chiếu độ hợp và tra ngày được tổ chức thành một trải nghiệm thống nhất — ưu tiên kết quả dễ hiểu trước, chi tiết chuyên sâu và lời nhắc kiểm chứng bằng đời thực sau.</p>
         <div class="hero-actions">
           <button class="btn primary" data-action="profile-open"><svg class="icon" style="display:inline-block;vertical-align:-5px;margin-right:6px"><use href="#i-user"/></svg>Tạo hồ sơ cá nhân</button>
           <button class="btn secondary" data-action="view" data-view="tarot">Khám phá Tarot</button>
@@ -88,11 +99,12 @@
     </section>
 
     <section class="feature-section reveal">
-      <div class="feature-heading"><div><span class="eyebrow">Bốn trải nghiệm chính</span><h2>Bạn muốn xem điều gì?</h2></div><p>Mỗi chức năng có một ngôn ngữ giao diện riêng, nhưng cùng dùng chung hồ sơ để giảm thao tác lặp lại.</p></div>
+      <div class="feature-heading"><div><span class="eyebrow">Năm trải nghiệm chính</span><h2>Bạn muốn xem điều gì?</h2></div><p>Mỗi chức năng có một ngôn ngữ giao diện riêng, nhưng cùng dùng chung hồ sơ để giảm thao tác lặp lại. Phần “Độ hợp” cho phép đối chiếu hồ sơ của bạn với một người khác mà không lưu hồ sơ người đó.</p></div>
       <div class="feature-grid">
         <button class="feature-card" data-tilt data-tilt-strength="5" style="--card-rgb:154,130,208" data-action="view" data-view="tarot"><span class="feature-icon"><svg class="icon icon-lg"><use href="#i-tarot"/></svg></span><small>TRẢI BÀI</small><strong>Tarot</strong><p>Auto toàn cảnh hoặc 3 lá theo chủ đề/câu hỏi. Cùng dữ liệu cho kết quả ổn định trong ngày.</p><b>Xem Tarot →</b></button>
         <button class="feature-card" data-tilt data-tilt-strength="5" style="--card-rgb:99,165,149" data-action="view" data-view="fortune"><span class="feature-icon"><svg class="icon icon-lg"><use href="#i-number"/></svg></span><small>THẦN SỐ HỌC</small><strong>Xem bói cá nhân</strong><p>Chân dung tổng hợp, 8 chỉ số, nhịp năm/tháng/ngày và lớp diễn giải theo hồ sơ.</p><b>Xem chỉ số →</b></button>
         <button class="feature-card" data-tilt data-tilt-strength="5" style="--card-rgb:209,175,111" data-action="view" data-view="horoscope"><span class="feature-icon"><svg class="icon icon-lg"><use href="#i-horoscope"/></svg></span><small>CAN CHI</small><strong>Tử vi tổng quan</strong><p>Ngày âm, Can Chi, Tam hợp, Lục hợp, Đối xung, Cung phi Nam/Nữ và Ngũ hành.</p><b>Xem tử vi →</b></button>
+        <button class="feature-card compatibility-feature" data-tilt data-tilt-strength="5" style="--card-rgb:198,126,164" data-action="view" data-view="compatibility"><span class="feature-icon"><svg class="icon icon-lg"><use href="#i-compatibility"/></svg></span><small>ĐỐI CHIẾU HAI NGƯỜI</small><strong>Xem mức độ hòa hợp</strong><p>So sánh Thần số học, Can Chi, Ngũ hành và nhịp hiện tại; tập trung vào điểm thuận, điểm cần giao tiếp và câu hỏi thực tế.</p><b>So độ hợp →</b></button>
         <button class="feature-card" data-tilt data-tilt-strength="5" style="--card-rgb:109,148,190" data-action="view" data-view="dates"><span class="feature-icon"><svg class="icon icon-lg"><use href="#i-calendar"/></svg></span><small>TRA NGÀY</small><strong>Ngày phù hợp</strong><p>Xếp hạng theo mục đích, tuổi và các tiêu chí minh bạch; xem rõ từng điểm cộng/trừ.</p><b>Tra ngày →</b></button>
       </div>
     </section>
@@ -128,15 +140,20 @@
 
   <!-- NUMEROLOGY -->
   <section class="view" id="view-fortune">
-    <section class="page-hero panel panel-accent reveal"><div><span class="eyebrow">Thần số học • Chân dung số</span><h1>Đọc phần tổng hợp trước, chỉ số chi tiết xem sau.</h1><p>Hệ thống tính từ họ tên và ngày sinh, sau đó tách rõ phần tính toán và phần diễn giải tham khảo.</p><div class="hero-chips"><span class="chip"><i></i>8 chỉ số</span><span class="chip"><i></i>Nhịp năm / tháng / ngày</span><span class="chip"><i></i>Có công thức kiểm tra</span></div></div><button class="btn secondary" data-action="profile-open">Thông tin của tôi</button></section>
-    <section class="primary-reading panel panel-accent reveal"><div class="section-head"><div><span class="eyebrow">Kết quả chính</span><h3>Chân dung tổng hợp</h3></div><span class="badge">Nên đọc trước</span></div><div class="reading" id="numerologyReading">Tạo hồ sơ để xem phân tích.</div></section>
-    <section class="padded panel panel-accent reveal numerology-deep"><div class="section-head"><div><span class="eyebrow">Phân tích tương quan</span><h3>Các chỉ số đang phối hợp như thế nào?</h3></div><span class="badge">Phân tích sâu</span></div><div class="insight-grid" id="numerologyInsightGrid"></div><div class="axis-bars" id="numerologyAxisBars"></div><p class="analysis-note">Các thanh tương quan là thước đo trực quan nội bộ dựa trên khoảng cách giữa các con số sau rút gọn; không phải xác suất hay kết luận khoa học.</p></section>
-    <div class="two-col">
-      <section class="padded panel reveal"><div class="section-head"><div><span class="eyebrow">Nhịp hiện tại</span><h3>Năm • tháng • ngày cá nhân</h3></div><span class="badge" id="currentDateBadge">—</span></div><div class="cycle-grid" id="cycleStack"></div></section>
-      <section class="padded panel reveal"><div class="section-head"><div><span class="eyebrow">Theo hồ sơ</span><h3 id="numerologyGenderTitle">Nam/Nữ</h3></div><span class="badge" id="numerologyGenderBadge">Hồ sơ</span></div><div class="reading" id="numerologyGenderReading">Chọn giới tính trong hồ sơ để bổ sung lớp phân tích.</div></section>
+    <section class="page-hero panel panel-accent reveal fortune-hero"><div><span class="eyebrow">Thần số học • Chân dung phản tư</span><h1>Đọc một chân dung, không phải một bảng số.</h1><p>Các con số vẫn được tính đầy đủ, nhưng phần chính sẽ kể thành một mạch dễ hiểu: <strong>bạn thường vận hành thế nào, điều gì giúp bạn phát huy tốt, lúc nào dễ mắc kẹt và giai đoạn hiện tại đang đòi hỏi điều gì.</strong></p><div class="hero-chips"><span class="chip"><i></i>Câu chuyện tổng hợp</span><span class="chip"><i></i>Điểm mạnh & điểm dễ quá đà</span><span class="chip"><i></i>Gợi ý có thể kiểm chứng</span></div></div><button class="btn secondary" data-action="profile-open">Thông tin của tôi</button></section>
+
+    <section class="primary-reading panel panel-accent reveal fortune-story-panel"><div class="section-head"><div><span class="eyebrow">Nên đọc đầu tiên</span><h3>Câu chuyện vận hành của bạn</h3></div><span class="badge">Không gắn nhãn cố định</span></div><div class="reading fortune-reading" id="numerologyReading">Tạo hồ sơ để xem phân tích.</div></section>
+
+    <section class="padded panel reveal fortune-glance"><div class="section-head"><div><span class="eyebrow">Nhìn nhanh</span><h3>Ba điều nổi bật đáng để quan sát</h3></div><span class="badge">Từ toàn bộ hồ sơ</span></div><div class="insight-grid fortune-cues" id="numerologyInsightGrid"></div></section>
+
+    <div class="two-col fortune-now-grid">
+      <section class="padded panel reveal"><div class="section-head"><div><span class="eyebrow">Bạn đang ở nhịp nào?</span><h3>Năm • tháng • ngày cá nhân</h3></div><span class="badge" id="currentDateBadge">—</span></div><div class="cycle-grid" id="cycleStack"></div><p class="analysis-note">Chu kỳ chỉ nên dùng như một cách đặt ưu tiên và tự quan sát, không phải lịch dự đoán sự kiện.</p></section>
+      <section class="padded panel reveal fortune-context"><div class="section-head"><div><span class="eyebrow">Góc nhìn bổ sung</span><h3 id="numerologyGenderTitle">Theo hồ sơ</h3></div><span class="badge" id="numerologyGenderBadge">Hồ sơ</span></div><div class="reading" id="numerologyGenderReading">Chọn giới tính trong hồ sơ để bổ sung lớp phân tích.</div></section>
     </div>
-    <details class="advanced panel reveal" open><summary><span><b>8 chỉ số trực quan</b><small>Vòng tròn là biểu diễn thị giác của con số, không phải phần trăm dự đoán.</small></span><i>+</i></summary><div class="advanced-body"><div class="metrics-grid" id="numerologyMetrics"></div></div></details>
-    <details class="advanced panel reveal"><summary><span><b>Cách hệ thống tính</b><small>Mở khi muốn kiểm tra công thức.</small></span><i>+</i></summary><div class="advanced-body"><div class="formula-grid" id="numerologyFormula"></div></div></details>
+
+    <details class="advanced panel reveal fortune-details"><summary><span><b>Khám phá 8 chỉ số gốc</b><small>Dành cho lúc bạn muốn xem từng con số đứng sau câu chuyện tổng hợp.</small></span><i>+</i></summary><div class="advanced-body"><div class="metrics-grid" id="numerologyMetrics"></div></div></details>
+    <details class="advanced panel reveal fortune-details"><summary><span><b>Xem tương quan kỹ thuật giữa các chỉ số</b><small>Phần này giữ thước đo nội bộ để kiểm tra logic, không phải “độ chính xác” hay xác suất.</small></span><i>+</i></summary><div class="advanced-body"><div class="axis-bars" id="numerologyAxisBars"></div><p class="analysis-note">Các thanh chỉ biểu diễn khoảng cách số học giữa những số đã rút gọn. Hãy ưu tiên phần diễn giải và hành vi thực tế hơn điểm số nội bộ.</p></div></details>
+    <details class="advanced panel reveal fortune-details"><summary><span><b>Cách hệ thống tính</b><small>Mở khi muốn kiểm tra công thức Pythagoras được ứng dụng sử dụng.</small></span><i>+</i></summary><div class="advanced-body"><div class="formula-grid" id="numerologyFormula"></div></div></details>
   </section>
 
   <!-- HOROSCOPE -->
@@ -144,7 +161,7 @@
     <section class="page-hero panel panel-accent reveal"><div><span class="eyebrow">Tử vi tổng quan • Can Chi</span><h1>Từ thông tin cơ bản đến quan hệ chuyên sâu.</h1><p>Ngày âm, Can Chi năm/ngày/giờ, Tam hợp, Lục hợp, Đối xung, Cung phi Nam/Nữ và Ngũ hành được tách thành từng lớp dễ đọc.</p><div class="hero-chips"><span class="chip"><i></i>Ngày âm & Can Chi</span><span class="chip"><i></i>Tam hợp • Lục hợp • Đối xung</span><span class="chip"><i></i>Cung phi Nam/Nữ</span></div></div><button class="btn secondary" data-action="profile-open">Thông tin của tôi</button></section>
     <section class="profile-banner panel panel-accent reveal"><div class="zodiac-orb"><span id="zodiacOrb">✦</span></div><div><span class="eyebrow">Hồ sơ đang xem</span><h2 id="horoscopeName">Chưa có dữ liệu</h2><p class="muted" id="horoscopeSub">Thiết lập ngày sinh để phân tích.</p></div><div class="tag-row" id="horoscopeTags"></div></section>
     <div class="pillar-grid" id="horoscopePillars"></div>
-    <section class="primary-reading panel panel-accent reveal"><div class="section-head"><div><span class="eyebrow">Tóm tắt dễ hiểu</span><h3>Điểm nổi bật của hồ sơ</h3></div><span class="badge">Nên đọc trước</span></div><div class="reading" id="horoscopeReading">Chưa đủ dữ liệu.</div></section>
+    <section class="primary-reading panel panel-accent reveal"><div class="section-head"><div><span class="eyebrow">Phân tích chuyên sâu có giới hạn</span><h3>Cấu trúc Can Chi của hồ sơ</h3></div><span class="badge">Nên đọc trước</span></div><div class="reading" id="horoscopeReading">Chưa đủ dữ liệu.</div></section>
     <section class="padded panel panel-accent reveal horoscope-deep"><div class="section-head"><div><span class="eyebrow">Ma trận cấu trúc</span><h3>Quan hệ giữa trụ năm • ngày • giờ</h3></div><span class="badge">Đọc sâu</span></div><div class="insight-grid" id="horoscopeInsightGrid"></div><div class="relation-matrix" id="horoscopeRelationMatrix"></div><p class="analysis-note">Ma trận chỉ mô tả các quan hệ Địa Chi đang có dữ liệu. Đây không phải một lá số Bát tự hoàn chỉnh.</p></section>
     <div class="two-col">
       <section class="padded panel reveal"><span class="eyebrow">Địa Chi</span><h3>Tam hợp & đối xung</h3><p class="muted" style="font-size:10px;margin-bottom:12px">Ghi rõ từng quan hệ: Tam hợp, Lục hợp, Lục xung/đối xung và Tứ hành xung.</p><div class="relation-list" id="compatibilityBox"></div></section>
@@ -153,13 +170,110 @@
     <details class="advanced panel reveal" open><summary><span><b>Ngũ hành Thiên Can & Cung hoàng đạo</b><small>Biểu đồ Ngũ hành chỉ đếm các Thiên Can hiện có dữ liệu.</small></span><i>+</i></summary><div class="advanced-body two-col"><section><span class="eyebrow">Ngũ hành Thiên Can</span><h3 id="elementTitle">—</h3><div class="element-bars" id="elementBars"></div><p class="muted" id="elementDesc" style="font-size:9px;margin-top:12px"></p></section><section><span class="eyebrow">Cung hoàng đạo</span><h3 id="westernZodiac">—</h3><p class="muted" id="westernDesc" style="font-size:10px"></p></section></div></details>
   </section>
 
+  <!-- COMPATIBILITY -->
+  <section class="view" id="view-compatibility">
+    <section class="page-hero panel panel-accent reveal compatibility-hero">
+      <div>
+        <span class="eyebrow">Đối chiếu hai người • Đọc theo mối quan hệ</span>
+        <h1>Không chỉ “hợp bao nhiêu %” — hãy xem hai người hợp theo cách nào.</h1>
+        <p>Phần này đặt trọng tâm vào <strong>mẫu tương tác</strong>: điều gì đến tự nhiên, điều gì cần chủ động và chủ đề nào nên được nói rõ. Can Chi, Ngũ hành và Cung phi chỉ là lớp tham khảo bổ sung, không phải tiêu chuẩn quyết định một mối quan hệ.</p>
+        <div class="hero-chips"><span class="chip"><i></i>Mẫu quan hệ</span><span class="chip"><i></i>Điểm thuận tự nhiên</span><span class="chip"><i></i>Điểm cần chủ động</span></div>
+      </div>
+      <button class="btn secondary" data-action="profile-open">Sửa hồ sơ của tôi</button>
+    </section>
+
+    <section class="compat-principle panel reveal"><span class="reference-icon"><svg class="icon"><use href="#i-info"/></svg></span><div><strong>Mô hình giúp đặt câu hỏi, không quyết định thay hai người.</strong><p>Ngày sinh và các hệ quy chiếu chỉ tạo ra một góc nhìn tham khảo. Chất lượng thật của mối quan hệ vẫn phải được đánh giá qua <b>hành vi, sự tôn trọng, giao tiếp, ranh giới, khả năng giữ lời và cùng giải quyết vấn đề</b>.</p></div></section>
+
+    <section class="compat-setup panel panel-accent reveal">
+      <div class="compat-setup-head"><div><span class="eyebrow">Thiết lập đối chiếu</span><h3>Hai người & ngữ cảnh cần xem</h3></div><span class="badge">Người thứ hai không lưu trên máy</span></div>
+      <div class="compat-setup-grid">
+        <article class="compat-person-card self-profile-block">
+          <small>HỒ SƠ CỦA BẠN</small><strong id="compatSelfName">Chưa có hồ sơ</strong><p id="compatSelfMeta">Tạo hồ sơ của bạn trước khi so sánh.</p><div class="tag-row" id="compatSelfTags"></div>
+        </article>
+
+        <div class="compat-context-card">
+          <span class="compat-link-icon"><svg class="icon icon-lg"><use href="#i-compatibility"/></svg></span>
+          <label class="form-field"><span>Ngữ cảnh mối quan hệ</span><select id="relationshipType"><option value="general">Tổng quan</option><option value="love">Tình cảm / yêu đương</option><option value="friendship">Bạn bè</option><option value="work">Công việc / cộng tác</option><option value="family">Gia đình</option></select></label>
+          <p>Ngữ cảnh chỉ thay đổi <strong>trọng số ưu tiên</strong>. Ví dụ tình cảm ưu tiên cảm xúc/giao tiếp, còn công việc ưu tiên mục tiêu/giao tiếp/phân vai.</p>
+        </div>
+
+        <article class="compat-partner-card">
+          <div class="compat-partner-title"><small>NGƯỜI CẦN SO SÁNH</small><strong>Nhập thông tin cơ bản</strong></div>
+          <label class="form-field"><span>Họ và tên *</span><input id="partnerName" maxlength="80" placeholder="Nguyễn Văn B"></label>
+          <div class="form-grid"><label class="form-field"><span>Ngày sinh *</span><input type="date" id="partnerBirthDate"></label><label class="form-field"><span>Giờ sinh (nếu biết)</span><input type="time" id="partnerBirthTime"></label></div>
+          <div class="form-grid"><label class="form-field"><span>Giới tính cho Cung phi</span><select id="partnerGender"><option value="">Chưa chọn</option><option value="male">Nam</option><option value="female">Nữ</option><option value="other">Khác / không dùng Nam-Nữ</option></select></label><label class="form-field"><span>Nơi sinh (không bắt buộc)</span><input id="partnerBirthPlace" maxlength="80" placeholder="Bình Thuận, Việt Nam"></label></div>
+        </article>
+      </div>
+      <div class="compat-setup-actions"><button class="btn primary" data-action="compatibility-analyze"><svg class="icon" style="display:inline-block;vertical-align:-5px;margin-right:7px"><use href="#i-compatibility"/></svg>Đọc bản đồ mối quan hệ</button><button class="btn ghost" data-action="compatibility-reset">Xóa người so sánh</button><p>Thông tin người còn lại chỉ tồn tại trong phiên hiện tại.</p></div>
+    </section>
+
+    <div class="result-stack compatibility-result-stack">
+      <section class="result-panel panel panel-accent reveal" id="compatibilityResultPanel">
+        <div class="empty-state" id="compatEmpty"><div class="orb"><svg class="icon icon-xl"><use href="#i-compatibility"/></svg></div><h3>Bản đồ mối quan hệ sẽ xuất hiện ở đây</h3><p>Thay vì chỉ trả về một điểm “hợp/không hợp”, hệ thống sẽ đọc kiểu tương tác, vùng thuận tự nhiên, vùng cần chủ động và câu hỏi nên trao đổi ngoài đời thực.</p></div>
+        <div id="compatResult" class="hidden">
+          <div class="pair-profiles" id="compatPairProfiles"></div>
+
+          <div class="compat-summary-layout">
+            <div class="compat-overview-copy"><span class="eyebrow" id="compatRelationLabel">Tổng quan</span><h2 id="compatLabel">—</h2><div class="reading" id="compatSummary"></div><div class="data-quality"><span class="badge" id="compatDataCompleteness">—</span><p id="compatMissing"></p></div></div>
+            <div class="compat-score-compact"><div class="compat-score-ring" id="compatScoreRing"><div><strong id="compatScore">—</strong><small>/100</small></div></div><p>Điểm tổng hợp chỉ để định vị tương đối giữa các chiều, không phải xác suất thành công.</p></div>
+          </div>
+
+          <div class="compat-snapshot-grid">
+            <article class="compat-snapshot natural"><small>ĐỒNG ĐIỆU NỀN TẢNG</small><strong id="compatNaturalScore">—</strong><p id="compatNaturalText">—</p></article>
+            <article class="compat-snapshot effort"><small>MỨC CẦN CHỦ ĐỘNG</small><strong id="compatEffortLevel">—</strong><p id="compatEffortText">—</p></article>
+            <article class="compat-snapshot pattern"><small>MẪU QUAN HỆ NỔI BẬT</small><strong id="compatPatternTitle">—</strong><p id="compatPatternText">—</p></article>
+          </div>
+
+          <div class="compat-story panel-soft" id="compatStory"></div>
+
+          <div class="section-head compat-section-head"><div><span class="eyebrow">Bản đồ 6 chiều</span><h3>Xem nơi nào đang thuận — nơi nào cần nói rõ</h3></div><span class="badge" id="compatSpreadLabel">—</span></div>
+          <div class="compat-dimensions" id="compatDimensionGrid"></div>
+        </div>
+      </section>
+
+      <section class="analysis-panel panel panel-accent hidden reveal" id="compatDeepPanel">
+        <div class="section-head"><div><span class="eyebrow">Đọc sâu mối quan hệ</span><h3>Điều nên hiểu trước khi nhìn các hệ quy chiếu truyền thống</h3></div><span class="badge">Ưu tiên hành vi thật</span></div>
+        <div class="expert-report compat-expert-report" id="compatExpertReport"></div>
+
+        <div class="compat-two-col">
+          <article class="compat-list-card positive"><small>ĐẾN TỰ NHIÊN HƠN</small><ul id="compatStrengths"></ul></article>
+          <article class="compat-list-card caution"><small>CẦN CHỦ ĐỘNG HƠN</small><ul id="compatChallenges"></ul></article>
+        </div>
+
+        <section class="compat-conversation-block"><div class="section-subtitle"><span class="eyebrow">Ba cuộc nói chuyện đáng giá</span><h3>Đừng đoán ý — hãy hỏi nhau trực tiếp</h3></div><div class="compat-prompts" id="compatConversationPrompts"></div></section>
+
+        <div class="compat-action-grid">
+          <article class="action-card"><small>3 VIỆC CÓ THỂ LÀM NGAY</small><ol id="compatAdvice"></ol></article>
+          <article class="reality-card"><small>KIỂM TRA BẰNG ĐỜI THỰC</small><h4>Những dấu hiệu quan trọng hơn điểm số</h4><div id="compatRealityChecklist"></div></article>
+        </div>
+
+        <details class="compat-details advanced"><summary><span><b>Lớp tham khảo truyền thống</b><small>Can Chi, Ngũ hành, Cung phi và Cung hoàng đạo — đặt trọng số thấp hơn các trục tương tác.</small></span><i>+</i></summary><div class="advanced-body"><div id="compatTraditional"></div></div></details>
+
+        <div class="compat-disclaimer"><svg class="icon"><use href="#i-info"/></svg><p id="compatDisclaimer"></p></div>
+      </section>
+    </div>
+  </section>
+
   <!-- DATES -->
   <section class="view" id="view-dates">
-    <section class="page-hero panel panel-accent reveal"><div><span class="eyebrow">Tra ngày phù hợp • Xếp hạng</span><h1>Chọn việc cần làm, hệ thống sẽ xếp hạng ngày.</h1><p>Ngày đứng đầu được làm nổi bật. Mỗi ngày có thể mở phần lý do để xem rõ từng tiêu chí cộng/trừ điểm.</p><div class="hero-chips"><span class="chip"><i></i>Thang 0–100</span><span class="chip"><i></i>Ngày nổi bật nhất</span><span class="chip"><i></i>Giải thích từng điểm</span></div></div><button class="btn secondary" data-action="profile-open">Thông tin của tôi</button></section>
-    <div class="guided-layout">
-      <aside class="guide-card panel panel-accent reveal"><div class="guide-title"><span class="brand-sigil"><svg class="icon"><use href="#i-calendar"/></svg></span><div><strong>Tiêu chí tra cứu</strong><small>Khoảng tối đa 60 ngày.</small></div></div><label class="form-field"><span>Mục đích</span><select id="datePurpose"><option value="general">Việc chung</option><option value="work">Khai trương / công việc</option><option value="contract">Ký kết / hợp đồng</option><option value="travel">Xuất hành / đi xa</option><option value="love">Hẹn hò / tình cảm</option><option value="study">Thi cử / học tập</option></select></label><div class="form-grid"><label class="form-field"><span>Từ ngày</span><input type="date" id="dateFrom"></label><label class="form-field"><span>Đến ngày</span><input type="date" id="dateTo"></label></div><button class="btn primary full" data-action="dates-scan">Phân tích khoảng ngày</button><div class="simple-scale"><span><b>80+</b> Rất phù hợp</span><span><b>68+</b> Khá phù hợp</span><span><b>52+</b> Trung tính</span><span><b>&lt;52</b> Cân nhắc</span></div></aside>
-      <div class="result-stack"><section class="best-date panel panel-accent reveal" id="bestDatePanel"><span class="eyebrow">Kết quả quan trọng nhất</span><h3>Ngày phù hợp nhất trong khoảng đã chọn</h3><div class="best-grid"><div class="best-cell"><small>NGÀY ĐỨNG ĐẦU</small><strong id="bestDate">—</strong><span id="bestDateMeta">Chưa phân tích</span></div><div class="best-cell"><small>ĐIỂM</small><strong id="bestScore">—</strong><span>/100</span></div><div class="best-cell"><small>SỐ NGÀY KHÁ TỐT</small><strong id="goodDateCount">—</strong><span>điểm từ 68</span></div><div class="best-cell"><small>HỒ SƠ TUỔI</small><strong id="dateProfileBranch">—</strong><span id="dateProfileElement">—</span></div></div></section><section class="padded panel panel-accent reveal date-decision" id="dateDecisionPanel"><div class="section-head"><div><span class="eyebrow">So sánh quyết định</span><h3>Top 3 & phân bố toàn khoảng</h3></div><span class="badge" id="dateSeparation">Chưa phân tích</span></div><div class="top3-grid" id="dateTop3"></div><div class="distribution-bars" id="dateDistribution"></div><p class="analysis-note" id="dateDecisionNote">Sau khi phân tích, hệ thống sẽ cho biết ngày đứng đầu có thực sự tách biệt hay chỉ hơn các ngày khác một vài điểm.</p></section><section class="padded panel reveal"><div class="section-head"><div><span class="eyebrow">Xếp hạng ngày</span><h3 id="dateRankingTitle">Kết quả theo mục đích</h3></div><button class="btn ghost hidden" id="toggleAllDates" data-action="dates-toggle">Xem tất cả</button></div><div class="date-list" id="dateResults"><div class="empty-state compact"><p>Chọn khoảng ngày rồi bấm “Phân tích khoảng ngày”.</p></div></div></section></div>
-    </div>
+    <section class="page-hero panel panel-accent reveal date-hero"><div><span class="eyebrow">Tra ngày phù hợp • Quyết định gọn</span><h1>Chọn khoảng ngày. Xem lựa chọn tốt nhất trước.</h1><p>Màn hình chính chỉ giữ những gì cần để quyết định: <strong>ngày nổi bật nhất, Top 3 và các lý do chính.</strong> Danh sách dài cùng toàn bộ cách chấm điểm được thu gọn phía dưới.</p><div class="hero-chips"><span class="chip"><i></i>Kết luận trước</span><span class="chip"><i></i>Top 3 dễ so sánh</span><span class="chip"><i></i>Chi tiết khi cần</span></div></div><button class="btn secondary" data-action="profile-open">Thông tin của tôi</button></section>
+
+    <section class="date-filter panel panel-accent reveal">
+      <div class="date-filter-title"><span class="brand-sigil"><svg class="icon"><use href="#i-calendar"/></svg></span><div><strong>Bạn cần chọn ngày cho việc gì?</strong><small>Khoảng phân tích tối đa 60 ngày.</small></div></div>
+      <div class="date-filter-fields"><label class="form-field"><span>Mục đích</span><select id="datePurpose"><option value="general">Việc chung</option><option value="work">Khai trương / công việc</option><option value="contract">Ký kết / hợp đồng</option><option value="travel">Xuất hành / đi xa</option><option value="love">Hẹn hò / tình cảm</option><option value="study">Thi cử / học tập</option></select></label><label class="form-field"><span>Từ ngày</span><input type="date" id="dateFrom"></label><label class="form-field"><span>Đến ngày</span><input type="date" id="dateTo"></label><button class="btn primary date-scan-btn" data-action="dates-scan">Tìm ngày phù hợp</button></div>
+    </section>
+
+    <section class="date-primary-result panel panel-accent reveal" id="bestDatePanel">
+      <div class="date-winner"><span class="eyebrow">Lựa chọn nổi bật nhất</span><div class="date-winner-main"><div><strong id="bestDate">—</strong><span id="bestDateMeta">Chưa phân tích</span></div><div class="date-score-orb"><b id="bestScore">—</b><small>/100</small></div></div><p id="dateDecisionNote">Chọn khoảng ngày ở phía trên để hệ thống so sánh.</p></div>
+      <div class="date-key-reasons"><div class="date-result-mini"><small>HỒ SƠ TUỔI</small><strong id="dateProfileBranch">—</strong><span id="dateProfileElement">—</span></div><div class="date-result-mini"><small>NGÀY KHÁ TỐT</small><strong id="goodDateCount">—</strong><span>điểm từ 68</span></div><div class="date-result-mini"><small>ĐỘ TÁCH BIỆT</small><strong id="dateSeparation">—</strong><span>so với vị trí #2</span></div></div>
+      <div class="date-highlight-list" id="bestHighlights"><div class="empty-inline">Các lý do chính sẽ xuất hiện sau khi phân tích.</div></div>
+    </section>
+
+    <section class="padded panel reveal date-top3-panel" id="dateDecisionPanel"><div class="section-head"><div><span class="eyebrow">So sánh nhanh</span><h3>Top 3 ngày đáng cân nhắc</h3></div><span class="badge">Ưu tiên lịch thực tế khi điểm gần nhau</span></div><div class="top3-grid compact-top3" id="dateTop3"></div></section>
+
+    <details class="advanced panel reveal date-more"><summary><span><b>Xem bức tranh toàn khoảng</b><small>Phân bố điểm giúp biết có nhiều ngày tương đương hay chỉ một ngày nổi bật.</small></span><i>+</i></summary><div class="advanced-body"><div class="distribution-bars" id="dateDistribution"></div></div></details>
+
+    <details class="advanced panel reveal date-ranking-details"><summary><span><b>Xem toàn bộ xếp hạng & lý do chấm điểm</b><small>Chỉ mở khi bạn muốn kiểm tra từng ngày. Mặc định phần này được thu gọn để trang không bị dài.</small></span><i>+</i></summary><div class="advanced-body"><div class="section-head"><div><span class="eyebrow">Danh sách chi tiết</span><h3 id="dateRankingTitle">Kết quả theo mục đích</h3></div><button class="btn ghost hidden" id="toggleAllDates" data-action="dates-toggle">Xem tất cả</button></div><div class="date-list" id="dateResults"><div class="empty-state compact"><p>Chọn khoảng ngày rồi bấm “Tìm ngày phù hợp”.</p></div></div></div></details>
   </section>
 </main>
 
@@ -172,15 +286,15 @@
       <label class="form-field"><span>Họ và tên *</span><input id="fullName" maxlength="80" required placeholder="Nguyễn Văn A"></label>
       <div class="form-grid"><label class="form-field"><span>Ngày sinh dương lịch *</span><input type="date" id="birthDate" required></label><label class="form-field"><span>Giờ sinh (nếu biết)</span><input type="time" id="birthTime"></label></div>
       <div class="form-grid"><label class="form-field"><span>Giới tính dùng cho phân tích</span><select id="gender"><option value="">Chưa chọn</option><option value="male">Nam</option><option value="female">Nữ</option><option value="other">Khác / không dùng công thức Nam-Nữ</option></select></label><label class="form-field"><span>Nơi sinh</span><input id="birthPlace" maxlength="80" placeholder="Bình Thuận, Việt Nam"></label></div>
-      <label class="checkline"><input type="checkbox" id="privacyAgree" required><span>Tôi hiểu Tarot/tử vi là nội dung tham khảo và đồng ý lưu hồ sơ trên thiết bị này.</span></label>
+      <label class="checkline"><input type="checkbox" id="privacyAgree" required><span>Tôi hiểu mọi kết quả Tarot/Thần số học/Tử vi/Độ hợp/Xem ngày chỉ là tham khảo; quyết định và hành động thực tế phụ thuộc vào chính tôi. Tôi đồng ý lưu hồ sơ này trên thiết bị.</span></label>
       <div class="modal-actions"><button type="button" class="btn ghost" data-action="profile-clear">Xóa hồ sơ</button><button class="btn primary" type="submit">Lưu thông tin</button></div>
     </form>
   </div>
 </div>
 
-<footer><div><strong>HUYỀN CÁC</strong> · v5.2</div><p>Nội dung Tarot/tử vi mang tính văn hóa, giải trí và tự chiêm nghiệm. Bản v5.2 bổ sung phân tích tương quan, ma trận quan hệ, xếp hạng sâu và hiệu ứng 3D có tối ưu hiệu năng.</p></footer>
+<footer><div><strong>HUYỀN CÁC</strong> · v5.7.1</div><p><b>Lưu ý:</b> toàn bộ Tarot, Thần số học, Tử vi, Độ hợp và Xem ngày chỉ là mô hình tham khảo/phản tư. Không có kết quả nào thay thế quyền tự quyết của mỗi người. Hành vi, giao tiếp, giá trị sống, sự tôn trọng, ranh giới, hoàn cảnh và trách nhiệm với lựa chọn mới là những yếu tố cần được ưu tiên trong đời thực.</p></footer>
 
 
-<script type="module" src="assets/js/app.js"></script>
+<script defer src="assets/js/app.bundle.js"></script>
 </body>
 </html>

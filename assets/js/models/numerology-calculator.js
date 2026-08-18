@@ -18,29 +18,31 @@ export class NumerologyCalculator{
   static personalMonth(ds,date=new Date()){return this.reduce(this.personalYear(ds,date.getFullYear())+date.getMonth()+1,false)}
   static personalDay(ds,date=new Date()){return this.reduce(this.personalMonth(ds,date)+date.getDate(),false)}
   static info(n){return MysticalData.NUM_TEXT[n]||[`Số ${n}`,'một chỉ số bổ sung trong hồ sơ','đối chiếu với các chỉ số khác thay vì đọc riêng lẻ']}
-
   static baseNumber(n){return this.reduce(n,false)}
+
   static alignment(a,b){
     const x=this.baseNumber(a),y=this.baseNumber(b),distance=Math.abs(x-y),score=Math.max(18,Math.round(100-distance*11));
     const state=score>=88?'Giao thoa mạnh':score>=66?'Bổ trợ':score>=44?'Khác nhịp':'Độ tương phản cao';
     return {a,b,baseA:x,baseB:y,distance,score,state};
   }
+
   static family(n){
-    if([11].includes(n))return 'Trực giác';
-    if([22].includes(n))return 'Kiến tạo';
-    if([33].includes(n))return 'Phụng sự';
-    const b=this.baseNumber(n);
-    if([1,8].includes(b))return 'Chủ động';
-    if([2,6].includes(b))return 'Kết nối';
-    if([3,5].includes(b))return 'Biểu đạt';
-    if(b===4)return 'Cấu trúc';
-    if(b===7)return 'Chiêm nghiệm';
-    return 'Nhân văn';
+    if(n===11)return 'Trực giác';if(n===22)return 'Kiến tạo';if(n===33)return 'Phụng sự';
+    const b=this.baseNumber(n);if([1,8].includes(b))return 'Chủ động';if([2,6].includes(b))return 'Kết nối';if([3,5].includes(b))return 'Biểu đạt';if(b===4)return 'Cấu trúc';if(b===7)return 'Chiêm nghiệm';return 'Nhân văn';
   }
+
+  static alignmentNarrative(label,a,b){
+    const x=this.alignment(a,b);
+    let interpretation='';
+    if(x.score>=88)interpretation='hai trục gần nhau, nên nhu cầu bên trong và cách vận hành có xu hướng dễ phối hợp; rủi ro là quá tin vào một cách làm quen thuộc.';
+    else if(x.score>=66)interpretation='hai trục có nền chung nhưng vẫn tạo khác biệt đủ để bổ trợ; hiệu quả nhất khi bạn chủ động phân vai thay vì để chúng cạnh tranh.';
+    else if(x.score>=44)interpretation='hai trục khá khác nhịp; đây không nhất thiết là mâu thuẫn, nhưng thường đòi hỏi bạn chuyển chế độ tùy bối cảnh.';
+    else interpretation='độ tương phản cao; nếu thiếu tự quan sát, bạn có thể cảm thấy mình muốn một đằng nhưng lại biểu hiện hoặc hành động theo một hướng khác.';
+    return {label,...x,interpretation};
+  }
+
   static synthesis(values){
-    const lifeExpression=this.alignment(values.life,values.expression);
-    const innerOuter=this.alignment(values.soul,values.personality);
-    const currentCycle=this.alignment(values.life,values.personalYear);
+    const lifeExpression=this.alignment(values.life,values.expression),innerOuter=this.alignment(values.soul,values.personality),currentCycle=this.alignment(values.life,values.personalYear);
     const core=[values.life,values.expression,values.soul,values.personality,values.birthday,values.attitude,values.maturity];
     const familyCounts=core.reduce((acc,n)=>{const f=this.family(n);acc[f]=(acc[f]||0)+1;return acc},{});
     const dominant=Object.entries(familyCounts).sort((a,b)=>b[1]-a[1])[0]||['—',0];
@@ -50,12 +52,46 @@ export class NumerologyCalculator{
       {label:'Chủ đạo ↔ Năm cá nhân',...currentCycle,detail:`So sánh trục dài hạn (${values.life}) với nhịp của năm hiện tại (${values.personalYear}).`}
     ];
     const insights=[
-      {label:'CỤM NỔI BẬT',value:dominant[0],detail:`${dominant[1]}/${core.length} chỉ số lõi nằm trong nhóm quy ước “${dominant[0]}”. Đây là cách nhóm nội bộ để nhìn mẫu lặp, không phải một phép đo khoa học.`},
-      {label:'TRONG ↔ NGOÀI',value:innerOuter.state,detail:`Linh hồn ${values.soul} và Nhân cách ${values.personality} có mức giao thoa trực quan ${innerOuter.score}/100. Điểm này chỉ biểu diễn khoảng cách giữa hai con số sau rút gọn.`},
-      {label:'NHỊP HIỆN TẠI',value:currentCycle.state,detail:`Năm cá nhân ${values.personalYear} ${currentCycle.score>=66?'khá gần':'khá khác'} với trục Chủ đạo ${values.life}; nên đọc như một gợi ý về nhịp ưu tiên, không phải dự báo.`}
+      {label:'CỤM NỔI BẬT',value:dominant[0],detail:`${dominant[1]}/${core.length} chỉ số lõi nằm trong nhóm quy ước “${dominant[0]}”. Mẫu lặp này hữu ích để tìm chủ đề chung, nhưng không phải phép đo khoa học.`},
+      {label:'TRONG ↔ NGOÀI',value:innerOuter.state,detail:`Linh hồn ${values.soul} và Nhân cách ${values.personality} có mức giao thoa nội bộ ${innerOuter.score}/100. Điểm này chỉ biểu diễn khoảng cách số học sau rút gọn.`},
+      {label:'NHỊP HIỆN TẠI',value:currentCycle.state,detail:`Năm cá nhân ${values.personalYear} ${currentCycle.score>=66?'khá gần':'khá khác'} với trục Chủ đạo ${values.life}; nên đọc như gợi ý về nhịp ưu tiên, không phải dự báo.`}
     ];
-    return {axes,insights,familyCounts,dominantFamily:dominant[0]};
+    return {axes,insights,familyCounts,dominantFamily:dominant[0],dominantCount:dominant[1]};
   }
+
+  static expertReading(values,now){
+    const li=this.info(values.life),ei=this.info(values.expression),si=this.info(values.soul),pi=this.info(values.personality),mi=this.info(values.maturity);
+    const le=this.alignment(values.life,values.expression),io=this.alignment(values.soul,values.personality),cycleRel=this.alignment(values.life,values.personalYear);
+    const pm=this.personalMonthFromValues(values,now),pd=this.personalDayFromValues(values,now),dominant=this.synthesis(values).dominantFamily;
+    const style=le.score>=80
+      ?`Điều bạn muốn trở thành và cách bạn thường thể hiện ra ngoài khá cùng hướng. Khi đã tin vào một việc, bạn có xu hướng huy động năng lực tương đối liền mạch. Điểm cần để ý là đừng biến “đúng phong cách của mình” thành lý do để bỏ qua phản hồi.`
+      :le.score>=58
+      ?`Bên trong bạn có một hướng khá rõ, nhưng cách triển khai ra ngoài không phải lúc nào cũng đi cùng một nhịp. Đây thường là dạng hồ sơ có khả năng thích nghi tốt: cùng một mục tiêu nhưng có thể dùng nhiều cách tiếp cận. Khi mệt hoặc chịu áp lực, sự linh hoạt này dễ biến thành phân tán.`
+      :`Giữa động lực cốt lõi và cách biểu đạt có độ tương phản đáng kể. Bạn có thể muốn một điều nhưng lại hành động theo cách khiến người khác hiểu thành một điều khác. Điểm mấu chốt không phải “sửa con số”, mà là học cách gọi tên nhu cầu trước khi phản ứng.`;
+    const inner=io.score>=80
+      ?`Điều bạn cần ở bên trong khá dễ đi ra thành cách cư xử mà người khác nhìn thấy. Ưu điểm là tính nhất quán; mặt trái là đôi khi bạn cho rằng người khác “phải tự hiểu” vì với bạn mọi thứ vốn đã rõ.`
+      :io.score>=58
+      ?`Bạn không phải lúc nào cũng biểu lộ đúng mức điều mình đang cần. Có lúc bạn rất hiểu cảm xúc hoặc mong muốn của mình, nhưng lớp bên ngoài lại chọn một cách nói an toàn hơn. Vì vậy giao tiếp rõ nhu cầu sẽ hữu ích hơn việc chờ người khác đoán.`
+      :`Khoảng cách giữa đời sống bên trong và hình ảnh bên ngoài khá rõ trong mô hình này. Người khác có thể gặp một phiên bản rất khác với điều bạn thực sự đang trải qua. Nếu gần đây thường xuyên thấy “không ai hiểu mình”, hãy kiểm tra trước xem bạn đã nói đủ cụ thể hay chưa.`;
+    const cycle=cycleRel.score>=70
+      ?`Nhịp năm ${values.personalYear} đang khá thuận với cách bạn vốn vận hành. Đây là thời điểm hợp để làm sâu những gì đã chứng minh được hiệu quả, thay vì mở quá nhiều hướng chỉ vì cảm giác phải thay đổi.`
+      :`Nhịp năm ${values.personalYear} đang yêu cầu một kiểu vận hành hơi khác thói quen dài hạn. Cảm giác “không đúng nhịp” không nhất thiết là dấu hiệu xấu; nó có thể là giai đoạn buộc bạn học thêm một năng lực mà bình thường ít dùng.`;
+    const shadow=li[2];
+    return `
+      <div class="fortune-narrative">
+        <section class="fortune-lead-story"><span class="expert-kicker">BỨC TRANH CHUNG</span><h4>${li[0]} — nhưng không chỉ có một con số</h4><p>Nếu đọc toàn hồ sơ như một câu chuyện, trục chính của bạn nghiêng về <strong>${li[1]}</strong>. Cụm chủ đề lặp lại nhiều nhất thuộc nhóm <strong>${dominant}</strong>, nên đây có thể là kiểu năng lượng bạn dùng khá tự nhiên trong công việc, quan hệ hoặc lúc ra quyết định. Tuy nhiên, điểm đáng giá nhất không nằm ở nhãn “số ${values.life}”, mà ở việc nhận ra <strong>khi nào thế mạnh này giúp bạn tiến lên và khi nào nó bị dùng quá mức</strong>.</p></section>
+        <div class="fortune-story-grid">
+          <section class="fortune-story-block"><span class="expert-kicker">KHI BẠN Ở TRẠNG THÁI TỐT</span><h4>Bạn phát huy mạnh khi có không gian dùng đúng cách của mình</h4><p>${style}</p></section>
+          <section class="fortune-story-block"><span class="expert-kicker">BÊN TRONG & CÁCH NGƯỜI KHÁC THẤY</span><h4>Linh hồn ${values.soul} gặp Nhân cách ${values.personality}</h4><p>${inner}</p></section>
+          <section class="fortune-story-block"><span class="expert-kicker">ĐIỂM DỄ MẮC KẸT</span><h4>Điểm mạnh khi dùng quá mức có thể trở thành áp lực</h4><p>Với trục ${values.life}, điều nên tự kiểm tra là: <strong>${shadow}</strong>. Khi căng thẳng, thay vì hỏi “mình có đúng với con số này không?”, hãy hỏi cụ thể hơn: <em>tôi đang né quyết định, ôm quá nhiều, kiểm soát quá chặt hay phân tán vì điều gì?</em> Một câu hỏi gắn với hành vi luôn hữu ích hơn một nhãn tính cách.</p></section>
+          <section class="fortune-story-block"><span class="expert-kicker">GIAI ĐOẠN HIỆN TẠI</span><h4>Năm ${values.personalYear} → tháng ${pm} → ngày ${pd}</h4><p>${cycle} Chu kỳ tháng và ngày chỉ nên dùng để điều chỉnh <strong>cường độ và ưu tiên</strong>, không dùng để trì hoãn một việc cần làm hay phó mặc quyết định cho con số.</p></section>
+        </div>
+        <section class="fortune-practice"><span class="expert-kicker">THỬ TRONG 30 NGÀY</span><h4>Ba cách biến phần đọc thành dữ kiện thật</h4><ol><li>Ghi lại 2 tình huống bạn cảm thấy “rất là mình” và xem thế mạnh nào đang được sử dụng.</li><li>Ghi lại 1 tình huống khiến bạn mệt hoặc bị hiểu sai; đối chiếu xem vấn đề nằm ở nhu cầu bên trong hay cách biểu đạt ra ngoài.</li><li>Chọn một hành vi nhỏ phù hợp với giai đoạn hiện tại và đo bằng kết quả thực tế sau 2–4 tuần, thay vì dựa vào cảm giác “hợp số”.</li></ol><p class="fortune-disclaimer">Thần số học ở đây là một hệ quy chiếu phản tư. Nó không đo được toàn bộ tính cách, năng lực hay tương lai của một người. Bản thân bạn, trải nghiệm, môi trường và lựa chọn thực tế luôn có trọng lượng lớn hơn các phép tính này.</p></section>
+      </div>`;
+  }
+
+  static personalMonthFromValues(values,date){return this.reduce(values.personalYear+date.getMonth()+1,false)}
+  static personalDayFromValues(values,date){return this.reduce(this.personalMonthFromValues(values,date)+date.getDate(),false)}
 
   static genderInsight(g,lp,ex,so,pe){
     if(g==='male')return `<strong>Hồ sơ Nam:</strong> giới tính không làm thay đổi phép tính. Với Chủ đạo <strong>${lp}</strong> và Biểu đạt <strong>${ex}</strong>, hãy quan sát cách bạn dùng tính tự chủ, trách nhiệm và khả năng chia sẻ nhu cầu. Linh hồn <strong>${so}</strong> so với Nhân cách <strong>${pe}</strong> hữu ích để nhận ra khoảng cách giữa điều thực sự cần và hình ảnh bạn đang duy trì.`;
@@ -77,8 +113,7 @@ export class NumerologyCalculator{
       {label:'SỐ TRƯỞNG THÀNH',value:values.maturity,title:this.info(values.maturity)[0],note:'Chủ đạo + Biểu đạt'},
       {label:'NĂM CÁ NHÂN',value:values.personalYear,title:`Chu kỳ ${values.personalYear}`,note:`Năm ${now.getFullYear()}`}
     ];
-    const li=this.info(values.life),ei=this.info(values.expression),si=this.info(values.soul),pi=this.info(values.personality);
-    const reading=`<strong>Trục chính ${values.life} — ${li[0]}:</strong> thiên về ${li[1]}; điểm cần chú ý là ${li[2]}.<br><br><strong>Biểu đạt ${values.expression}</strong> nghiêng về ${ei[1]}. <strong>Linh hồn ${values.soul}</strong> gợi động lực bên trong thiên về ${si[1]}, còn <strong>Nhân cách ${values.personality}</strong> mô tả lớp biểu hiện người khác dễ nhận thấy: ${pi[1]}.<br><br>Các chỉ số khác nhau không cần ép thành một tính cách duy nhất; có thể hiểu là các lớp động lực, biểu hiện và cách vận hành trong thực tế.`;
+    const reading=this.expertReading(values,now);
     const pm=this.personalMonth(ds,now),pd=this.personalDay(ds,now);
     const cycles=[{value:values.personalYear,label:'Năm cá nhân',text:MysticalData.CYCLE_TEXT[values.personalYear],meta:String(now.getFullYear())},{value:pm,label:'Tháng cá nhân',text:MysticalData.CYCLE_TEXT[pm],meta:`Tháng ${now.getMonth()+1}`},{value:pd,label:'Ngày cá nhân',text:MysticalData.CYCLE_TEXT[pd],meta:Format.vn(now,{day:'2-digit',month:'2-digit'})}];
     const clean=this.stripName(name),vowels=[...clean].filter(c=>'AEIOUY'.includes(c)).join(''),cons=[...clean].filter(c=>!'AEIOUY'.includes(c)).join('');

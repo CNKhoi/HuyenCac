@@ -37,6 +37,36 @@ export class AstrologyCalculator{
     return {dominant:dominant?.[0]||'—',dominantCount:dominant?.[1]||0,missing,unique,total,diversity:Math.round(unique/5*100)};
   }
 
+  static stemElementRelation(a,b){
+    if(a===b)return {label:`Đồng hành ${a}`,tone:'neutral',detail:`Hai Thiên Can cùng hành ${a}; trong mô hình hiện tại đây là quan hệ đồng pha.`};
+    if(MysticalData.GENERATES[a]===b)return {label:`${a} sinh ${b}`,tone:'positive',detail:`Hành ${a} tạo sinh cho ${b}; đọc như dòng hỗ trợ từ trục trước sang trục sau.`};
+    if(MysticalData.GENERATES[b]===a)return {label:`${b} sinh ${a}`,tone:'positive',detail:`Hành ${b} tạo sinh cho ${a}; đọc như trục sau có khả năng bổ sung nguồn lực cho trục trước.`};
+    if(MysticalData.CONTROLS[a]===b)return {label:`${a} khắc ${b}`,tone:'caution',detail:`Hành ${a} khắc ${b}; nên đọc như một điểm ma sát hoặc yêu cầu điều tiết, không mặc định là xấu.`};
+    if(MysticalData.CONTROLS[b]===a)return {label:`${b} khắc ${a}`,tone:'caution',detail:`Hành ${b} khắc ${a}; mô hình gợi một quan hệ cần quản trị thay vì để hai xu hướng kéo ngược nhau.`};
+    return {label:'Quan hệ gián tiếp',tone:'neutral',detail:'Không có quan hệ sinh/khắc trực tiếp trong chu trình Ngũ hành đang dùng.'};
+  }
+  static polaritySummary(pillars){
+    const values=[];pillars.forEach(x=>{if(!x)return;values.push(MysticalData.STEM_POLARITY[x.stemIndex],MysticalData.BRANCH_POLARITY[x.branchIndex])});
+    const yang=values.filter(x=>x==='Dương').length,yin=values.length-yang;
+    const label=Math.abs(yang-yin)<=1?'Tương đối cân bằng':yang>yin?'Nghiêng Dương':'Nghiêng Âm';
+    return {yang,yin,total:values.length,label};
+  }
+  static expertReading(profile,d){
+    const {yc,dc,hc,z,selectedKua,relationMatrix,elementSummary}=d;
+    const yDay=this.stemElementRelation(yc.element,dc.element),dHour=hc?this.stemElementRelation(dc.element,hc.element):null,pol=this.polaritySummary([yc,dc,hc]);
+    const positives=relationMatrix.filter(x=>x.tone==='positive').length,cautions=relationMatrix.filter(x=>x.tone==='caution').length;
+    const branchConclusion=positives>cautions?'cấu trúc Chi thiên về liên kết/hỗ trợ':cautions>positives?'cấu trúc Chi có nhiều điểm ma sát cần quản trị':'cấu trúc Chi tương đối cân bằng, không có một hướng áp đảo';
+    return `<div class="expert-report">
+      <section class="expert-section expert-lead"><span class="expert-kicker">KẾT LUẬN ĐIỀU HÀNH</span><h4>${dc.stem} ${dc.branch} làm trục tham chiếu ngày sinh</h4><p>Trong cách đọc Tứ trụ, <strong>Thiên Can ngày</strong> thường được dùng làm mốc Nhật chủ. Bản ứng dụng này chỉ dùng trụ ngày như <strong>trục tham chiếu một phần</strong> vì chưa tính trụ tháng và không đánh giá vượng/suy, dụng thần hay đại vận. Với dữ liệu hiện có, Nhật Can <strong>${dc.stem} — ${dc.element}</strong> gợi mô-típ ${MysticalData.ELEMENT_TEXT[dc.element]}; còn ma trận Địa Chi cho thấy <strong>${branchConclusion}</strong>.</p></section>
+      <section class="expert-section"><span class="expert-kicker">1. THIÊN CAN NĂM ↔ NGÀY</span><h4>${yc.stem} ${yc.element} ↔ ${dc.stem} ${dc.element} · ${yDay.label}</h4><p>${yDay.detail} Trụ năm thường được ứng dụng này dùng như lớp bối cảnh/gốc tuổi, trong khi trụ ngày làm mốc vận hành cá nhân. Vì vậy, quan hệ này hữu ích để quan sát xem môi trường nền và cách phản ứng cá nhân đang bổ trợ hay tạo ma sát.</p></section>
+      ${hc?`<section class="expert-section"><span class="expert-kicker">2. THIÊN CAN NGÀY ↔ GIỜ</span><h4>${dc.stem} ${dc.element} ↔ ${hc.stem} ${hc.element} · ${dHour.label}</h4><p>${dHour.detail} Trong mô hình ứng dụng, trụ giờ được xem như lớp bổ sung cho cách biểu hiện ở phạm vi riêng tư/mục tiêu về sau; đây là diễn giải tham khảo chứ không thay thế Bát tự đầy đủ.</p></section>`:''}
+      <section class="expert-section"><span class="expert-kicker">${hc?'3':'2'}. MA TRẬN ĐỊA CHI</span><h4>${positives} hỗ trợ · ${cautions} ma sát · ${relationMatrix.length-positives-cautions} trung tính</h4><p>${relationMatrix.map(x=>`<strong>${x.from}–${x.to}:</strong> ${x.a} ↔ ${x.b} = ${x.label}`).join(' · ')}. Khi có Lục xung/Tứ hành xung, nên đọc là vùng có xu hướng cần điều tiết hoặc thay đổi nhịp; không đồng nhất với “xấu”. Khi có Tam hợp/Lục hợp, đọc là vùng có tính liên kết dễ hình thành hơn.</p></section>
+      <section class="expert-section"><span class="expert-kicker">${hc?'4':'3'}. ÂM DƯƠNG & NGŨ HÀNH</span><h4>${pol.label} · Dương ${pol.yang}/${pol.total} · Âm ${pol.yin}/${pol.total}</h4><p>Phân bố Âm/Dương hiện chỉ đếm Can và Chi của các trụ đang có dữ liệu. Thiên Can nổi bật là hành <strong>${elementSummary.dominant}</strong> (${elementSummary.dominantCount}/${elementSummary.total}). ${elementSummary.missing.length?`Các hành chưa xuất hiện ở lớp Thiên Can đang xét: <strong>${elementSummary.missing.join(', ')}</strong>.`:'Các hành đều có mặt trong dữ liệu đang xét.'} Không nên dùng thống kê này để kết luận cân bằng Ngũ hành toàn lá số vì thiếu trụ tháng và các lớp tàng can.</p></section>
+      <section class="expert-section"><span class="expert-kicker">${hc?'5':'4'}. CUNG PHI & CUNG HOÀNG ĐẠO</span><h4>${selectedKua?`Cung ${selectedKua.gua} ${selectedKua.element} · ${selectedKua.group}`:'Chưa áp dụng Cung phi'} · ${z.name}</h4><p>${selectedKua?`Cung phi được tính theo giới tính và năm âm lịch trong công thức truyền thống của ứng dụng; nên dùng chủ yếu cho lớp tham khảo phương vị.`:'Chưa chọn Nam/Nữ nên hệ thống không ép quy đổi Cung phi.'} Cung hoàng đạo <strong>${z.name}</strong> bổ sung một mô-típ phương Tây: ${z.text}. Hai hệ quy chiếu này nên được đọc tách lớp, không cộng gộp thành một “điểm số số mệnh”.</p></section>
+      <section class="expert-section expert-caution"><span class="expert-kicker">GIỚI HẠN MÔ HÌNH</span><h4>Chưa phải lá số Bát tự/Tử vi hoàn chỉnh</h4><p>Ứng dụng hiện có trụ năm, ngày và giờ; chưa dùng trụ tháng, tiết khí đầy đủ, tàng can, thập thần, vượng suy, dụng thần, đại vận/lưu niên. Vì vậy phần trên là <strong>phân tích cấu trúc Can Chi có kiểm soát</strong>, phù hợp để tham khảo và học hệ quy chiếu hơn là dự đoán chắc chắn tương lai.</p></section>
+    </div>`;
+  }
+
   static analyze(profile){
     const birth=new Date(profile.birthDate+'T12:00:00'),yc=this.yearCanChi(birth.getFullYear()),dc=this.dayCanChi(birth),hc=this.hourCanChi(birth,profile.birthTime),lunar=LunarConverter.fromDate(birth),z=this.western(profile.birthDate),rel=this.relations(yc.branchIndex),tri=this.trineInfo(yc.branchIndex),four=this.fourClashInfo(yc.branchIndex),harm=MysticalData.SIX_HARMONY[yc.branchIndex];
     const maleKua=this.kuaForYear(lunar.year,'male'),femaleKua=this.kuaForYear(lunar.year,'female'),selectedKua=this.kuaForYear(lunar.year,profile.gender);
@@ -60,7 +90,8 @@ export class AstrologyCalculator{
       {label:'THIÊN CAN NỔI BẬT',value:elementSummary.dominant,detail:`Hành ${elementSummary.dominant} xuất hiện ${elementSummary.dominantCount}/${total} Thiên Can đang có dữ liệu. ${elementSummary.missing.length?`Chưa xuất hiện: ${elementSummary.missing.join(', ')}.`:'Cả năm hành đều có mặt trong dữ liệu đang xét.'}`},
       {label:'CUNG PHI',value:selectedKua?`${selectedKua.gua} • ${selectedKua.element}`:'Chưa áp dụng',detail:selectedKua?`Quái số ${selectedKua.number}, thuộc ${selectedKua.group}. Đây là lớp thay đổi theo Nam/Nữ trong mô hình hiện tại.`:'Cần chọn Nam hoặc Nữ nếu muốn áp dụng công thức Cung phi truyền thống.'}
     ];
-    const reading=`Hồ sơ <strong>${this.genderLabel(profile.gender)}</strong> có trụ năm <strong>${yc.stem} ${yc.branch}</strong> đặt nền ở hành <strong>${yc.element}</strong> — ${MysticalData.ELEMENT_TEXT[yc.element]}. Trụ ngày <strong>${dc.stem} ${dc.branch}</strong> mang Can ${dc.stem} thuộc <strong>${dc.element}</strong>${hc?`, trong khi giờ sinh tạo trụ <strong>${hc.stem} ${hc.branch}</strong> thuộc ${hc.element}`:''}.<br><br>Ở lớp quan hệ, ma trận năm–ngày${hc?'–giờ':''} hiện được tóm tắt là <strong>${structureLabel.toLowerCase()}</strong>. Ở lớp phương Tây, <strong>${z.name}</strong> bổ sung mô-típ ${z.text}. ${selectedKua?`Cung phi theo hồ sơ ${this.genderLabel(profile.gender)} là <strong>${selectedKua.gua} ${selectedKua.element}</strong>, thuộc ${selectedKua.group}.`:'Chưa áp dụng Cung phi Nam/Nữ.'}`;
-    return {birth,yc,dc,hc,lunar,z,rel,tri,four,harm,maleKua,femaleKua,selectedKua,counts,total,elementSummary,relationsMain,relationExtra,relationMatrix,deepInsights,reading};
+    const partial={birth,yc,dc,hc,lunar,z,rel,tri,four,harm,maleKua,femaleKua,selectedKua,counts,total,elementSummary,relationsMain,relationExtra,relationMatrix,deepInsights};
+    const reading=this.expertReading(profile,partial);
+    return {...partial,reading};
   }
 }

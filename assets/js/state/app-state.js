@@ -1,7 +1,7 @@
 import { StorageModel } from '../models/storage-model.js';
 
 export const AppState={
-  value:{view:'home',profile:StorageModel.load(),tarot:null,dates:null,showAllDates:false},
+  value:{view:'home',profile:StorageModel.load(),tarot:null,compatibility:null,dates:null,showAllDates:false},
   listeners:new Set(),
   get(){return this.value},
   patch(patch){
