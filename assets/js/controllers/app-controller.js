@@ -6,9 +6,26 @@ import { Format } from '../utils/format.js';
 import { UIManager } from '../views/ui-manager.js';
 
 export const AppController={
-  init(){AppState.subscribe((state,patch)=>UIManager.render(state,patch));this.bindDelegatedEvents();this.initDates();UIManager.render(AppState.get(),{});window.addEventListener('scroll',()=>UIManager.q('#topbar')?.classList.toggle('scrolled',window.scrollY>10),{passive:true})},
+  init(){
+    AppState.subscribe((state,patch)=>UIManager.render(state,patch));
+    this.bindDelegatedEvents();
+    this.initDates();
+    UIManager.render(AppState.get(),{});
+
+    let scrollFrame=0;
+    window.addEventListener('scroll',()=>{
+      if(scrollFrame) return;
+      scrollFrame=requestAnimationFrame(()=>{
+        scrollFrame=0;
+        UIManager.q('#topbar')?.classList.toggle('scrolled',window.scrollY>10);
+      });
+    },{passive:true});
+  },
   bindDelegatedEvents(){
-    document.addEventListener('click',e=>{const target=e.target.closest('[data-action]');if(!target){if(e.target.id==='profileModal')UIManager.closeProfile();return}const action=target.dataset.action;
+    document.addEventListener('click',e=>{
+      const target=e.target.closest('[data-action]');
+      if(!target){if(e.target.id==='profileModal')UIManager.closeProfile();return}
+      const action=target.dataset.action;
       if(action==='view'){e.preventDefault();AppState.patch({view:target.dataset.view})}
       else if(action==='profile-open')UIManager.openProfile(AppState.get().profile)
       else if(action==='profile-close')UIManager.closeProfile()
@@ -18,8 +35,16 @@ export const AppController={
       else if(action==='dates-scan')this.scanDates()
       else if(action==='dates-toggle')AppState.patch({showAllDates:!AppState.get().showAllDates})
     });
-    document.addEventListener('change',e=>{if(e.target.id==='tarotMode')UIManager.updateTarotModeUI();if(e.target.id==='tarotTopic'&&UIManager.q('#tarotMode')?.value==='preset')UIManager.renderTarotPreset()});
-    document.addEventListener('submit',e=>{if(e.target.id!=='profileForm')return;e.preventDefault();const profile={fullName:UIManager.q('#fullName').value.trim(),birthDate:UIManager.q('#birthDate').value,birthTime:UIManager.q('#birthTime').value,gender:UIManager.q('#gender').value,birthPlace:UIManager.q('#birthPlace').value.trim()};StorageModel.save(profile);AppState.patch({profile,tarot:null,dates:null});UIManager.closeProfile()});
+    document.addEventListener('change',e=>{
+      if(e.target.id==='tarotMode')UIManager.updateTarotModeUI();
+      if(e.target.id==='tarotTopic'&&UIManager.q('#tarotMode')?.value==='preset')UIManager.renderTarotPreset();
+    });
+    document.addEventListener('submit',e=>{
+      if(e.target.id!=='profileForm')return;
+      e.preventDefault();
+      const profile={fullName:UIManager.q('#fullName').value.trim(),birthDate:UIManager.q('#birthDate').value,birthTime:UIManager.q('#birthTime').value,gender:UIManager.q('#gender').value,birthPlace:UIManager.q('#birthPlace').value.trim()};
+      StorageModel.save(profile);AppState.patch({profile,tarot:null,dates:null});UIManager.closeProfile();
+    });
     document.addEventListener('keydown',e=>{if(e.key==='Escape')UIManager.closeProfile()});
   },
   initDates(){const t=new Date();UIManager.q('#dateFrom').value=Format.iso(t);UIManager.q('#dateTo').value=Format.iso(Format.addDays(t,21))},

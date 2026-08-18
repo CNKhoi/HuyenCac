@@ -1,30 +1,41 @@
-# Kiến trúc v5.1
+# Huyền Các v5.2 — Architecture
 
-## Data flow
+## Runtime flow
 
-`User Event → AppController → Model → AppState.patch() → UIManager.render()`
+```text
+DOM Event
+  ↓
+AppController (event delegation)
+  ↓
+Pure Model
+  ├─ TarotEngine
+  ├─ NumerologyCalculator
+  ├─ LunarConverter
+  ├─ AstrologyCalculator
+  └─ DateScorer
+  ↓
+AppState.patch()
+  ↓ only changed keys
+UIManager.render()
+  ↓
+DOM
+```
 
-### Model
-Không truy cập DOM. Bao gồm:
-- `NumerologyCalculator`
-- `LunarConverter`
-- `AstrologyCalculator`
-- `TarotEngine`
-- `DateScorer`
+## Interaction layer
 
-### View
-`UIManager` chỉ render giao diện và animation.
+`InteractionManager` is separate from business logic and rendering. It owns pointer-based 3D tilt using one delegated `pointermove` handler and `requestAnimationFrame`. It does not run on coarse pointers or when `prefers-reduced-motion: reduce` is active.
 
-### Controller
-`AppController` dùng event delegation ở document-level, đọc input và gọi Model.
+Tarot flip/deal state is class-driven (`dealt`, `revealed`); the model only returns card data.
 
-### State
-`AppState` là nguồn trạng thái trung tâm: view, profile, Tarot result, date result.
+## Deep-analysis data
 
-## Vì sao kiến trúc này tốt hơn 1 file?
-- Có thể sửa Tarot độc lập với Tử vi.
-- Browser cache từng CSS/JS riêng.
-- Dễ lazy-load feature trong bản kế tiếp.
-- Dễ viết unit test cho Model.
-- Dễ thêm backend/API mà không trộn với DOM.
-- Git diff nhỏ và ít conflict hơn khi nhiều người cùng làm.
+- `TarotEngine.synthesize()` returns orientation balance, dominant Major Arcana phase and symbolic tempo.
+- `NumerologyCalculator.synthesis()` returns cross-metric alignment axes and a repeated-number family summary.
+- `AstrologyCalculator.analyze()` returns a year/day/hour branch relation matrix and element summary.
+- `DateScorer.range()` returns Top 3, score distribution, rank separation and strongest positive/caution factor.
+
+These supplemental scores are explicitly UI/reference models. They do not claim scientific predictive accuracy.
+
+## GitHub Pages / Service Worker
+
+All Service Worker precache URLs resolve against `self.registration.scope`, so project-page deployments such as `username.github.io/repository/` do not accidentally request assets from the domain root.

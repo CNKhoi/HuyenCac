@@ -1,29 +1,36 @@
-# Huyền Các v5.1 — Modular Architecture
+# Huyền Các v5.2 — Deep Analysis & 3D Experience
 
-Bản này giữ nguyên chức năng của v5.0 nhưng tách dự án thành nhiều module có trách nhiệm rõ ràng.
+SPA static thuần HTML/CSS/JavaScript, không database, không backend và không có bước build bắt buộc. Bản v5.2 giữ kiến trúc module của v5.1 nhưng bổ sung phân tích sâu hơn và một lớp tương tác 3D được tối ưu để không gắn `pointermove` listener cho từng card.
 
-## Deploy lên GitHub Pages
+## Deploy GitHub Pages
 
-Đây là SPA static thuần HTML/CSS/JavaScript, **không có database, backend hoặc bước build bắt buộc**. Chỉ cần upload toàn bộ cấu trúc thư mục lên repository GitHub.
+Upload toàn bộ thư mục này lên repository. Trong GitHub chọn **Settings → Pages → Build and deployment → Deploy from a branch**, chọn branch `main` và `/ (root)`.
 
-Trong GitHub: **Settings → Pages → Build and deployment → Deploy from a branch**, chọn branch chứa source (thường là `main`) và thư mục `/ (root)`.
+`.nojekyll`, `manifest.webmanifest` và Service Worker đã cấu hình theo đường dẫn tương đối, vì vậy vẫn hoạt động khi website nằm trong subfolder dạng `username.github.io/repository/`.
 
-File `.nojekyll` đã được giữ sẵn để GitHub Pages phục vụ trực tiếp cấu trúc static của dự án.
+## Nâng cấp chính v5.2
+
+- Tarot: mặt sau lá bài, animation chia bài + lật 3D, tilt theo con trỏ, phân tích mẫu xuôi/ngược và pha Major Arcana nổi bật.
+- Thần số học: thêm lớp tương quan Chủ đạo↔Biểu đạt, Linh hồn↔Nhân cách, Chủ đạo↔Năm cá nhân và nhóm chỉ số nổi bật.
+- Tử vi: thêm ma trận quan hệ Địa Chi giữa trụ năm, ngày và giờ; tóm tắt hành Thiên Can nổi bật và Cung phi.
+- Xem ngày: thêm Lục hợp và Tứ hành xung vào mô hình tham khảo, Top 3, phân bố điểm toàn khoảng và độ tách biệt giữa ngày #1 và #2.
+- Performance: State bỏ qua patch không đổi, scroll dùng `requestAnimationFrame`, 3D dùng một delegated pointer listener, hỗ trợ `prefers-reduced-motion`, `content-visibility` cho khối dài.
+- Service Worker: cache theo scope tương đối, phù hợp GitHub Pages project site.
 
 ## Cấu trúc
 
 ```text
-Huyen_Cac_v5_1_Modular/
-├─ index.html                  # SPA shell / markup
-├─ manifest.webmanifest        # PWA metadata
-├─ sw.js                       # cache static assets
+Huyen_Cac_v5_2_Deep_3D/
+├─ index.html
+├─ manifest.webmanifest
+├─ sw.js
 ├─ package.json
 ├─ assets/
 │  ├─ css/
-│  │  ├─ tokens.css            # palette / design tokens
-│  │  ├─ components.css        # button, panel, form, chip...
-│  │  ├─ layout.css            # topbar + SPA shell
-│  │  ├─ motion.css            # modal + animation
+│  │  ├─ tokens.css
+│  │  ├─ components.css
+│  │  ├─ layout.css
+│  │  ├─ motion.css
 │  │  ├─ responsive.css
 │  │  └─ features/
 │  │     ├─ home.css
@@ -33,25 +40,23 @@ Huyen_Cac_v5_1_Modular/
 │  │     ├─ horoscope.css
 │  │     └─ dates.css
 │  └─ js/
-│     ├─ app.js                # entry point
-│     ├─ data/                 # constants
-│     ├─ utils/                # format helpers
-│     ├─ models/               # pure business logic, NO DOM
-│     ├─ state/                # AppState
-│     ├─ config/               # FeatureConfig
-│     ├─ views/                # UI rendering
-│     ├─ controllers/          # event delegation / orchestration
-│     └─ services/             # service worker client
+│     ├─ app.js
+│     ├─ data/
+│     ├─ utils/
+│     ├─ models/
+│     ├─ state/
+│     ├─ config/
+│     ├─ views/
+│     ├─ controllers/
+│     └─ services/
+│        ├─ service-worker-client.js
+│        └─ interaction-manager.js
 ├─ tests/
 │  └─ model-smoke.mjs
 └─ docs/
    └─ architecture.md
 ```
 
-## Test logic
+## Test logic tùy chọn
 
-```bash
-npm test
-```
-
-Không cần cài package ngoài.
+Nếu máy có Node.js, có thể chạy `npm test`. Website không cần Node.js để chạy trên GitHub Pages.
