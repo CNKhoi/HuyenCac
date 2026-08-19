@@ -1,62 +1,60 @@
-# Huyền Các v5.2 — Deep Analysis & 3D Experience
+# Huyền Các v5.7.1 — Human Reading & Compact Dates
 
-SPA static thuần HTML/CSS/JavaScript, không database, không backend và không có bước build bắt buộc. Bản v5.2 giữ kiến trúc module của v5.1 nhưng bổ sung phân tích sâu hơn và một lớp tương tác 3D được tối ưu để không gắn `pointermove` listener cho từng card.
+Static SPA thuần HTML/CSS/JavaScript. Không cần database hoặc backend.
 
-## Deploy GitHub Pages
+## Chạy trực tiếp bằng file://
 
-Upload toàn bộ thư mục này lên repository. Trong GitHub chọn **Settings → Pages → Build and deployment → Deploy from a branch**, chọn branch `main` và `/ (root)`.
+Giải nén thư mục và mở `index.html` bằng Chrome/Edge, ví dụ:
 
-`.nojekyll`, `manifest.webmanifest` và Service Worker đã cấu hình theo đường dẫn tương đối, vì vậy vẫn hoạt động khi website nằm trong subfolder dạng `username.github.io/repository/`.
+`file:///C:/Users/KHOICNM/Downloads/Huyen_Cac_v5_5_Compatibility_UX/index.html`
 
-## Nâng cấp chính v5.2
+Runtime dùng `assets/js/app.bundle.js` dạng classic deferred script, nên không phụ thuộc ES Module khi chạy `file://`.
 
-- Tarot: mặt sau lá bài, animation chia bài + lật 3D, tilt theo con trỏ, phân tích mẫu xuôi/ngược và pha Major Arcana nổi bật.
-- Thần số học: thêm lớp tương quan Chủ đạo↔Biểu đạt, Linh hồn↔Nhân cách, Chủ đạo↔Năm cá nhân và nhóm chỉ số nổi bật.
-- Tử vi: thêm ma trận quan hệ Địa Chi giữa trụ năm, ngày và giờ; tóm tắt hành Thiên Can nổi bật và Cung phi.
-- Xem ngày: thêm Lục hợp và Tứ hành xung vào mô hình tham khảo, Top 3, phân bố điểm toàn khoảng và độ tách biệt giữa ngày #1 và #2.
-- Performance: State bỏ qua patch không đổi, scroll dùng `requestAnimationFrame`, 3D dùng một delegated pointer listener, hỗ trợ `prefers-reduced-motion`, `content-visibility` cho khối dài.
-- Service Worker: cache theo scope tương đối, phù hợp GitHub Pages project site.
+## GitHub Pages
 
-## Cấu trúc
+Upload toàn bộ thư mục lên repository rồi bật **Settings → Pages → Deploy from a branch → main → /(root)**.
 
-```text
-Huyen_Cac_v5_2_Deep_3D/
-├─ index.html
-├─ manifest.webmanifest
-├─ sw.js
-├─ package.json
-├─ assets/
-│  ├─ css/
-│  │  ├─ tokens.css
-│  │  ├─ components.css
-│  │  ├─ layout.css
-│  │  ├─ motion.css
-│  │  ├─ responsive.css
-│  │  └─ features/
-│  │     ├─ home.css
-│  │     ├─ shared.css
-│  │     ├─ tarot.css
-│  │     ├─ numerology.css
-│  │     ├─ horoscope.css
-│  │     └─ dates.css
-│  └─ js/
-│     ├─ app.js
-│     ├─ data/
-│     ├─ utils/
-│     ├─ models/
-│     ├─ state/
-│     ├─ config/
-│     ├─ views/
-│     ├─ controllers/
-│     └─ services/
-│        ├─ service-worker-client.js
-│        └─ interaction-manager.js
-├─ tests/
-│  └─ model-smoke.mjs
-└─ docs/
-   └─ architecture.md
-```
+Service Worker và Web App Manifest chỉ kích hoạt trên `http/https`; khi mở bằng `file://` chúng tự bỏ qua.
 
-## Test logic tùy chọn
+## Chức năng chính
 
-Nếu máy có Node.js, có thể chạy `npm test`. Website không cần Node.js để chạy trên GitHub Pages.
+- Tarot: Auto 6 lá / 3 lá, deterministic theo dữ liệu và ngày xem, 3D flip + tilt.
+- Thần số học: 8 chỉ số, tương quan nội bộ và báo cáo phân tích sâu.
+- Tử vi/Can Chi: ngày âm, Can Chi năm-ngày-giờ, Tam hợp/Lục hợp/Lục xung, Cung phi, Ngũ hành.
+- **Độ hợp hai người:** so sánh 6 chiều gồm giá trị & hướng sống, nhu cầu cảm xúc, giao tiếp, Can Chi & Ngũ hành, phát triển và nhịp hiện tại.
+- Xem ngày: xếp hạng minh bạch, Top 3, phân bố điểm và từng yếu tố cộng/trừ.
+
+## Nguyên tắc của chức năng “Độ hợp”
+
+`CompatibilityCalculator` là một **mô hình tham khảo**, không phải xác suất thành công của mối quan hệ. Điểm 0–100 chỉ giúp trực quan hóa dữ liệu nội bộ của ứng dụng.
+
+Kết quả luôn nhắc người dùng ưu tiên dữ kiện đời thực: giá trị sống, hành vi, giao tiếp, tôn trọng, ranh giới, sự an toàn, trách nhiệm và lựa chọn của chính hai người.
+
+Thông tin người được so sánh không lưu vào LocalStorage; chỉ tồn tại trong State của trang hiện tại.
+
+## Kiến trúc
+
+Source ES6 được giữ trong `assets/js/` theo Model / View / Controller / State. Runtime trình duyệt dùng `assets/js/app.bundle.js` để tương thích đồng thời file:// và GitHub Pages.
+
+Chạy smoke test logic khi cần:
+
+`npm test`
+
+
+## v5.6 — Trang Độ hợp được thiết kế lại
+- Chuyển từ dashboard chấm điểm sang “bản đồ mối quan hệ”.
+- Form hai hồ sơ hiển thị đối xứng, không còn sidebar dài.
+- Điểm tổng được hạ vai trò; ưu tiên mẫu quan hệ, đồng điệu nền tảng và vùng cần chủ động.
+- Can Chi/Ngũ hành/Cung phi chuyển xuống phần tham khảo mở rộng.
+- Thêm 3 câu hỏi đối thoại theo ngữ cảnh quan hệ.
+- Giảm checklist thực tế còn 4 tiêu chí cốt lõi.
+
+
+## v5.7.1 — Xem bói tự nhiên hơn & Xem ngày gọn hơn
+- Thần số học chuyển từ dashboard điểm số sang câu chuyện vận hành: trạng thái tốt, khoảng cách trong/ngoài, điểm dễ mắc kẹt, chu kỳ hiện tại và bài tập 30 ngày.
+- Các thước đo 0–100 được đưa xuống phần kỹ thuật thu gọn.
+- Xem ngày chuyển sang decision-first: bộ lọc ngang, ngày nổi bật + 3 lý do chính, Top 3; phân bố và toàn bộ danh sách nằm trong accordion.
+
+
+## v5.7.1
+- Đồng nhất tuyệt đối chiều rộng hai trường “Từ ngày” và “Đến ngày” trên Chrome/Edge và responsive.
