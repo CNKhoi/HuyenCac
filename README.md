@@ -1,4 +1,18 @@
-# Huyền Các v5.7.1 — Human Reading & Compact Dates
+# Huyền Các v5.9 — Dễ hiểu trước, chi tiết sau
+
+Bản này ưu tiên người dùng phổ thông: mỗi chức năng hiển thị **kết luận → nên làm gì → phần “Vì sao?”**. Thuật ngữ, điểm số nội bộ và công thức vẫn được giữ nhưng mặc định thu gọn.
+
+# Huyền Các v5.9 — Fortune Flow & Private Identity
+
+Bản static chạy được cả `file:///.../index.html` và GitHub Pages.
+
+## Thay đổi chính v5.9
+
+- **Xem bói** được tổ chức lại theo đúng mạch: **Tài chính → Tương lai nên làm gì/cần tránh gì dựa vào độ tuổi → Đường tình duyên**.
+- Các phân tích tương lai sử dụng **độ tuổi hiện tại + năm cá nhân + các trục thần số học** để đưa ra ưu tiên thực hành; không trình bày như dự đoán sự kiện chắc chắn.
+- Thêm **CCCD và số điện thoại tùy chọn** ở hồ sơ chính và hồ sơ người so sánh. Dữ liệu gốc không tham gia các phép tính huyền học và không được lưu; ứng dụng chỉ tạo một fingerprint cục bộ để phân biệt các hồ sơ có tên/ngày sinh giống nhau.
+- Fingerprint cục bộ chỉ được dùng để phân biệt profile và giúp trải Tarot deterministic không bị trùng hoàn toàn ở hai hồ sơ giống dữ liệu cơ bản.
+- Mọi nội dung vẫn có nguyên tắc: **kết quả chỉ để tham khảo; hành vi, hoàn cảnh và quyết định của chính mỗi người quan trọng hơn mô hình tính toán**.
 
 Static SPA thuần HTML/CSS/JavaScript. Không cần database hoặc backend.
 

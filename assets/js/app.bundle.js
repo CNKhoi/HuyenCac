@@ -54,6 +54,7 @@ const MysticalData = Object.freeze({
   PURPOSE_NAME:{general:'Việc chung',work:'Khai trương / công việc',contract:'Ký kết / hợp đồng',travel:'Xuất hành / đi xa',love:'Hẹn hò / tình cảm',study:'Thi cử / học tập'}
 });
 
+
 /* ===== utils/format.js ===== */
 const Format={
   vn(date,opts={weekday:'long',day:'2-digit',month:'2-digit',year:'numeric'}){return new Intl.DateTimeFormat('vi-VN',opts).format(date)},
@@ -65,7 +66,40 @@ const Format={
    APP STATE — central immutable-ish store
    ========================================================= */
 
+
+/* ===== utils/identity.js ===== */
+/**
+ * Optional local identity discriminator.
+ * Raw CCCD / phone values are never persisted by this module.
+ * They are only transformed into a short local fingerprint so two records
+ * with identical name + birth data can still be distinguished when needed.
+ */
+const Identity={
+  digits(v){return String(v||'').replace(/\D/g,'')},
+  sourceLabel(cccd,phone){const c=!!this.digits(cccd),p=!!this.digits(phone);return c&&p?'CCCD + số điện thoại':c?'CCCD':p?'Số điện thoại':''},
+  fallbackHash(text){
+    let h1=0x811c9dc5,h2=0x9e3779b9;
+    for(let i=0;i<text.length;i++){
+      const c=text.charCodeAt(i);h1^=c;h1=Math.imul(h1,0x01000193);h2^=(c+i);h2=Math.imul(h2,0x85ebca6b);
+    }
+    return `${(h1>>>0).toString(16).padStart(8,'0')}${(h2>>>0).toString(16).padStart(8,'0')}`;
+  },
+  async fingerprint({cccd='',phone='',fullName='',birthDate=''}){
+    const c=this.digits(cccd),p=this.digits(phone);if(!c&&!p)return '';
+    const payload=`huyen-cac|${c}|${p}|${String(fullName).trim().toLowerCase()}|${birthDate}`;
+    try{
+      if(globalThis.crypto?.subtle&&globalThis.TextEncoder){
+        const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(payload));
+        return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('').slice(0,20);
+      }
+    }catch{}
+    return this.fallbackHash(payload);
+  }
+};
+
+
 /* ===== models/storage-model.js ===== */
+
 class StorageModel{
   static memory=null;
 
@@ -90,20 +124,32 @@ class StorageModel{
   }
 }
 
-/* ===== models/lunar-converter.js ===== */
-class LunarConverter{
-  static jdFromDate(dd,mm,yy){let a=Math.floor((14-mm)/12),y=yy+4800-a,m=mm+12*a-3;let jd=dd+Math.floor((153*m+2)/5)+365*y+Math.floor(y/4)-Math.floor(y/100)+Math.floor(y/400)-32045;if(jd<2299161)jd=dd+Math.floor((153*m+2)/5)+365*y+Math.floor(y/4)-32083;return jd}
-  static newMoon(k){const T=k/1236.85,T2=T*T,T3=T2*T,dr=Math.PI/180;let Jd1=2415020.75933+29.53058868*k+0.0001178*T2-0.000000155*T3;Jd1+=0.00033*Math.sin((166.56+132.87*T-0.009173*T2)*dr);const M=359.2242+29.10535608*k-0.0000333*T2-0.00000347*T3;const Mpr=306.0253+385.81691806*k+0.0107306*T2+0.00001236*T3;const F=21.2964+390.67050646*k-0.0016528*T2-0.00000239*T3;let C1=(0.1734-0.000393*T)*Math.sin(M*dr)+0.0021*Math.sin(2*dr*M);C1=C1-0.4068*Math.sin(Mpr*dr)+0.0161*Math.sin(2*dr*Mpr);C1-=0.0004*Math.sin(3*dr*Mpr);C1+=0.0104*Math.sin(2*dr*F)-0.0051*Math.sin((M+Mpr)*dr)-0.0074*Math.sin((M-Mpr)*dr)+0.0004*Math.sin((2*F+M)*dr)-0.0004*Math.sin((2*F-M)*dr)-0.0006*Math.sin((2*F+Mpr)*dr)+0.0010*Math.sin((2*F-Mpr)*dr)+0.0005*Math.sin((2*Mpr+M)*dr);let dt;if(T<-11)dt=0.001+0.000839*T+0.0002261*T2-0.00000845*T3-0.000000081*T*T3;else dt=-0.000278+0.000265*T+0.000262*T2;return Jd1+C1-dt}
-  static sunLongitude(jdn){const T=(jdn-2451545)/36525,T2=T*T,dr=Math.PI/180,M=357.52910+35999.05030*T-0.0001559*T2-0.00000048*T*T2,L0=280.46645+36000.76983*T+0.0003032*T2;let DL=(1.914600-0.004817*T-0.000014*T2)*Math.sin(dr*M);DL+=(0.019993-0.000101*T)*Math.sin(dr*2*M)+0.000290*Math.sin(dr*3*M);let L=(L0+DL)*dr;return L-Math.PI*2*Math.floor(L/(Math.PI*2))}
-  static getNewMoonDay(k,tz=MysticalData.TZ){return Math.floor(this.newMoon(k)+0.5+tz/24)}
-  static getSunLongitude(day,tz=MysticalData.TZ){return Math.floor(this.sunLongitude(day-0.5-tz/24)/Math.PI*6)}
-  static month11(yy,tz=MysticalData.TZ){const off=this.jdFromDate(31,12,yy)-2415021,k=Math.floor(off/29.530588853),nm=this.getNewMoonDay(k,tz),sl=this.getSunLongitude(nm,tz);return sl>=9?this.getNewMoonDay(k-1,tz):nm}
-  static leapOffset(a11,tz=MysticalData.TZ){const k=Math.floor(0.5+(a11-2415021.076998695)/29.530588853);let last=0,i=1,arc=this.getSunLongitude(this.getNewMoonDay(k+i,tz),tz);do{last=arc;i++;arc=this.getSunLongitude(this.getNewMoonDay(k+i,tz),tz)}while(arc!==last&&i<14);return i-1}
-  static solarToLunar(dd,mm,yy,tz=MysticalData.TZ){const dayNumber=this.jdFromDate(dd,mm,yy),k=Math.floor((dayNumber-2415021.076998695)/29.530588853);let monthStart=this.getNewMoonDay(k+1,tz);if(monthStart>dayNumber)monthStart=this.getNewMoonDay(k,tz);let a11=this.month11(yy,tz),b11=a11,lunarYear;if(a11>=monthStart){lunarYear=yy;a11=this.month11(yy-1,tz)}else{lunarYear=yy+1;b11=this.month11(yy+1,tz)}const lunarDay=dayNumber-monthStart+1,diff=Math.floor((monthStart-a11)/29);let leap=0,lunarMonth=diff+11;if(b11-a11>365){const leapDiff=this.leapOffset(a11,tz);if(diff>=leapDiff){lunarMonth=diff+10;if(diff===leapDiff)leap=1}}if(lunarMonth>12)lunarMonth-=12;if(lunarMonth>=11&&diff<4)lunarYear-=1;return {day:lunarDay,month:lunarMonth,year:lunarYear,leap}}
-  static fromDate(date){return this.solarToLunar(date.getDate(),date.getMonth()+1,date.getFullYear())}
-}
+
+/* ===== state/app-state.js ===== */
+
+const AppState={
+  value:{view:'home',profile:StorageModel.load(),tarot:null,compatibility:null,dates:null,showAllDates:false},
+  listeners:new Set(),
+  get(){return this.value},
+  patch(patch){
+    const changed={};
+    for(const [key,value] of Object.entries(patch)){
+      if(this.value[key]!==value) changed[key]=value;
+    }
+    if(!Object.keys(changed).length) return;
+    this.value={...this.value,...changed};
+    this.listeners.forEach(fn=>fn(this.value,changed));
+  },
+  subscribe(fn){this.listeners.add(fn);return()=>this.listeners.delete(fn)}
+};
+
+/* =========================================================
+   FEATURE CONFIG — function-driven view metadata
+   ========================================================= */
+
 
 /* ===== models/numerology-calculator.js ===== */
+
 /** Pure numerology model. No DOM access. */
 class NumerologyCalculator{
   static stripName(s){return (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/gi,'d').toUpperCase().replace(/[^A-Z]/g,'')}
@@ -160,6 +206,72 @@ class NumerologyCalculator{
       {label:'NHỊP HIỆN TẠI',value:currentCycle.state,detail:`Năm cá nhân ${values.personalYear} ${currentCycle.score>=66?'khá gần':'khá khác'} với trục Chủ đạo ${values.life}; nên đọc như gợi ý về nhịp ưu tiên, không phải dự báo.`}
     ];
     return {axes,insights,familyCounts,dominantFamily:dominant[0],dominantCount:dominant[1]};
+  }
+
+
+
+  static ageOn(ds,date=new Date()){
+    const [y,m,d]=ds.split('-').map(Number);let age=date.getFullYear()-y;
+    const before=date.getMonth()+1<m||(date.getMonth()+1===m&&date.getDate()<d);if(before)age--;
+    return Math.max(0,age);
+  }
+
+  static ageStage(age){
+    if(age<18)return {key:'learning',label:'Giai đoạn xây nền',range:'Dưới 18',focus:'học kỹ năng, tạo thói quen và hiểu giá trị của tiền/cảm xúc trước khi gánh quyết định dài hạn'};
+    if(age<=24)return {key:'explore',label:'Giai đoạn thử nghiệm có kiểm soát',range:'18–24',focus:'tích lũy kỹ năng, trải nghiệm có giới hạn và xây nền tự lập'};
+    if(age<=34)return {key:'build',label:'Giai đoạn xây nền dài hạn',range:'25–34',focus:'ổn định năng lực kiếm sống, chọn hướng dài hạn và xây các cam kết có chất lượng'};
+    if(age<=44)return {key:'expand',label:'Giai đoạn mở rộng & tái cân bằng',range:'35–44',focus:'cân bằng tăng trưởng với sức bền, gia đình, trách nhiệm và chất lượng lựa chọn'};
+    if(age<=54)return {key:'optimize',label:'Giai đoạn tối ưu & củng cố',range:'45–54',focus:'lọc bớt thứ kém hiệu quả, bảo toàn thành quả và ưu tiên chiều sâu hơn số lượng'};
+    return {key:'preserve',label:'Giai đoạn bảo toàn & truyền lại giá trị',range:'55+',focus:'duy trì sự chủ động, bảo toàn nguồn lực và dành năng lượng cho điều có ý nghĩa lâu dài'};
+  }
+
+  static financeGuidance(values,age,now=new Date()){
+    const family=this.family(values.life),exprFamily=this.family(values.expression),py=values.personalYear,stage=this.ageStage(age);
+    const patterns={
+      'Chủ động':{strength:'khả năng quyết nhanh, nhìn nguồn lực theo mục tiêu và chủ động tạo cơ hội',risk:'dễ quá tự tin, tập trung quá nhiều vào một lựa chọn hoặc quyết định nhanh khi chưa đủ dữ kiện'},
+      'Kết nối':{strength:'khả năng thương lượng, duy trì quan hệ và tạo giá trị qua hợp tác',risk:'dễ chi tiêu theo cảm xúc, khó nói “không” hoặc nhường quá nhiều trong chuyện tiền bạc'},
+      'Biểu đạt':{strength:'khả năng tìm cơ hội qua giao tiếp, sáng tạo và thích nghi nhanh',risk:'dễ phân tán nguồn thu, mua theo hứng hoặc chạy theo cơ hội mới trước khi tối ưu cái đang có'},
+      'Cấu trúc':{strength:'khả năng lập kế hoạch, giữ kỷ luật và xây nền tài chính đều đặn',risk:'dễ quá thận trọng, bỏ lỡ cơ hội hợp lý hoặc giữ một mô hình cũ quá lâu chỉ vì nó quen thuộc'},
+      'Chiêm nghiệm':{strength:'khả năng nghiên cứu, soi rủi ro và không dễ bị cuốn theo đám đông',risk:'dễ chậm quyết định vì muốn đủ chắc chắn hoặc bỏ qua cơ hội vì phân tích quá lâu'},
+      'Nhân văn':{strength:'khả năng nhìn tiền như công cụ phục vụ giá trị lớn hơn và tạo tác động',risk:'dễ cho đi quá tay, định giá thấp công sức hoặc đặt lý tưởng cao hơn giới hạn nguồn lực'},
+      'Trực giác':{strength:'khả năng nhận ra mô-típ, xu hướng và cơ hội khác thường',risk:'dễ đánh đồng trực giác với bằng chứng, đặc biệt khi quyết định có yếu tố đầu cơ'},
+      'Kiến tạo':{strength:'khả năng nghĩ dài hạn, xây hệ thống và biến mục tiêu lớn thành cấu trúc',risk:'dễ mở rộng quá nhanh, ôm dự án lớn hoặc dùng đòn bẩy trước khi nền dòng tiền đủ chắc'},
+      'Phụng sự':{strength:'khả năng tạo giá trị bền nhờ trách nhiệm, chất lượng dịch vụ và uy tín',risk:'dễ làm nhiều hơn mức được trả hoặc đặt nhu cầu người khác lên trên an toàn tài chính của mình'}
+    };
+    const p=patterns[family]||patterns['Biểu đạt'];
+    const ageAdvice={
+      learning:['Tập thói quen ghi chép tiền vào/ra và hiểu khác biệt giữa nhu cầu với ham muốn.','Không vay/nợ hoặc mua sắm theo áp lực bạn bè; ưu tiên học kỹ năng trước khi tìm “cách kiếm tiền nhanh”.'],
+      explore:['Xây quỹ dự phòng nhỏ, đầu tư vào kỹ năng tạo thu nhập và tập đều một thói quen tiết kiệm.','Tránh nợ tiêu dùng, đầu cơ theo FOMO và dồn phần lớn tiền vào một cơ hội chưa hiểu rõ.'],
+      build:['Ưu tiên quỹ dự phòng, bảo hiểm phù hợp, tăng năng lực kiếm tiền và tích lũy đều theo kế hoạch.','Tránh nâng mức sống nhanh hơn thu nhập bền vững hoặc gánh khoản vay dài hạn chỉ vì áp lực so sánh.'],
+      expand:['Đa dạng hóa nguồn lực, rà soát rủi ro gia đình/công việc và dành tỷ lệ rõ cho mục tiêu dài hạn.','Tránh dùng đòn bẩy quá mức, mở rộng nhiều dự án cùng lúc hoặc xem thu nhập hiện tại là chắc chắn vĩnh viễn.'],
+      optimize:['Củng cố tài sản, giảm khoản kém hiệu quả, kiểm tra kế hoạch nghỉ hưu và tính thanh khoản.','Tránh giữ khoản đầu tư chỉ vì “đã bỏ nhiều tiền” hoặc chấp nhận rủi ro cao để bù cho thời gian đã qua.'],
+      preserve:['Ưu tiên bảo toàn vốn, thanh khoản, chống gian lận và kế hoạch chuyển giao/tài sản rõ ràng.','Tránh sản phẩm phức tạp không hiểu rõ, cam kết lợi nhuận cao và quyết định tài chính do người khác gây áp lực.']
+    }[stage.key];
+    const cycleTip={1:'Năm 1 hợp để rà soát cấu trúc thu nhập và bắt đầu một thói quen tài chính mới ở quy mô nhỏ.',2:'Năm 2 nhấn mạnh hợp tác: tiền bạc nên có quy ước rõ khi liên quan người khác.',3:'Năm 3 dễ có nhiều ý tưởng và chi tiêu trải nghiệm; cần một ngân sách vui chơi rõ ràng.',4:'Năm 4 hợp với kỷ luật, trả nợ, tích lũy và tối ưu quy trình tài chính.',5:'Năm 5 dễ có biến động/thử nghiệm; nên tăng quỹ đệm trước khi mở rộng rủi ro.',6:'Năm 6 thường kéo trách nhiệm gia đình/cam kết lên cao; nên phân biệt hỗ trợ hợp lý và gánh thay.',7:'Năm 7 hợp với rà soát, học sâu và tránh quyết định đầu tư vì sốt ruột.',8:'Năm 8 phù hợp đặt mục tiêu tài chính đo được, nhưng càng cần kỷ luật rủi ro và minh bạch số liệu.',9:'Năm 9 hợp để dọn khoản kém hiệu quả, khép nghĩa vụ cũ và tránh mở cam kết dài hạn chỉ vì cảm xúc.'}[py];
+    return {title:`Tài chính ở tuổi ${age}`,stage,profile:`Trục ${values.life} (${family}) kết hợp Biểu đạt ${values.expression} (${exprFamily}) cho thấy bạn có thể phát huy tốt ở ${p.strength}.`,risk:p.risk,doNow:ageAdvice[0],avoid:ageAdvice[1],cycleTip,disclaimer:'Đây là góc nhìn hành vi và quản trị rủi ro, không phải dự báo giàu/nghèo hay khuyến nghị đầu tư cá nhân.'};
+  }
+
+  static futureGuidance(values,age,now=new Date()){
+    const stage=this.ageStage(age),py=values.personalYear,life=this.info(values.life),maturity=this.info(values.maturity);
+    const cycle={
+      1:{do:'chọn một hướng mới đủ nhỏ để bắt đầu ngay và đặt mốc kiểm tra sau 30–90 ngày',avoid:'mở quá nhiều dự án cùng lúc hoặc đổi hướng chỉ vì cảm giác muốn làm mới'},
+      2:{do:'đầu tư vào quan hệ, kỹ năng lắng nghe và những việc cần phối hợp bền bỉ',avoid:'ép tiến độ khi điều kiện chưa chín hoặc im lặng quá lâu để giữ hòa khí'},
+      3:{do:'đưa ý tưởng ra ngoài, thử sản phẩm/nội dung/kỹ năng giao tiếp và đo phản hồi thực tế',avoid:'chạy theo cảm hứng mà thiếu lịch hoàn thành'},
+      4:{do:'xây quy trình, chuẩn hóa thói quen và hoàn thiện nền tảng đang còn lỏng',avoid:'cứng nhắc với kế hoạch khi dữ kiện thực tế đã thay đổi'},
+      5:{do:'thử nghiệm có giới hạn, học kỹ năng mới và chủ động tạo phương án dự phòng',avoid:'đánh đồng thay đổi với tiến bộ hoặc bỏ cái đang tốt chỉ vì chán'},
+      6:{do:'làm rõ cam kết, trách nhiệm và cân bằng giữa mình với gia đình/đội nhóm',avoid:'ôm trách nhiệm của người khác đến mức cạn năng lượng'},
+      7:{do:'học sâu, rà soát hướng đi và dành thời gian cho công việc cần tập trung chất lượng cao',avoid:'cô lập hoặc trì hoãn vô hạn vì chưa cảm thấy “đủ chắc”'},
+      8:{do:'đặt mục tiêu kết quả đo được, quản lý nguồn lực và học cách đàm phán giá trị của mình',avoid:'để áp lực thành tích khiến quyết định ngắn hạn lấn át rủi ro dài hạn'},
+      9:{do:'hoàn tất việc dang dở, đóng vòng cũ và giải phóng nguồn lực cho chu kỳ kế tiếp',avoid:'níu giữ một hướng đã không còn hiệu quả chỉ vì tiếc công sức đã bỏ ra'}
+    }[py];
+    return {age,stage,headline:`${stage.label} • Năm cá nhân ${py}`,context:`Ở tuổi ${age}, ưu tiên phát triển hợp lý thường là ${stage.focus}. Trục Chủ đạo ${values.life} (${life[0]}) cho thấy cách bạn thường khởi động vấn đề, còn Số trưởng thành ${values.maturity} (${maturity[0]}) gợi hướng năng lực cần được tích hợp nhiều hơn khi tuổi và trách nhiệm tăng lên.`,should:cycle.do,avoid:cycle.avoid,checkpoint:`Trong 6–12 tháng tới, hãy chọn tối đa 2 mục tiêu có thể đo được. Mỗi quý tự hỏi: “việc này đang tạo năng lực/tài sản/quan hệ tốt hơn, hay chỉ đang làm tôi bận hơn?”`,disclaimer:'Phần “tương lai” không dự đoán sự kiện sẽ xảy ra. Nó chỉ chuyển độ tuổi + chu kỳ hiện tại thành các ưu tiên thực hành để bạn tự quyết định.'};
+  }
+
+  static loveGuidance(values,age,now=new Date()){
+    const soul=this.info(values.soul),personality=this.info(values.personality),life=this.info(values.life),py=values.personalYear,stage=this.ageStage(age);
+    const ageFocus=age<25?'ưu tiên hiểu ranh giới, nhịp riêng và kiểu quan tâm khiến bạn cảm thấy được tôn trọng':age<35?'ưu tiên phân biệt hấp dẫn ban đầu với sự tương thích về giá trị, trách nhiệm và kế hoạch sống':age<45?'ưu tiên khả năng cùng gánh trách nhiệm, sửa chữa sau xung đột và giữ không gian phát triển cá nhân':age<55?'ưu tiên chất lượng đồng hành, sự trung thực, tôn trọng nhịp sống và cách hai người chăm sóc mối quan hệ qua thời gian':'ưu tiên sự bình an, tin cậy, quyền tự chủ và khả năng đồng hành thực tế hơn là hình ảnh lý tưởng về một mối quan hệ';
+    const cycleHint=[2,6].includes(py)?'Chu kỳ hiện tại đặt nhiều chú ý vào hợp tác/cam kết; đây là lúc phù hợp để nói rõ nhu cầu và kỳ vọng thay vì chỉ đoán ý nhau.':py===5?'Chu kỳ hiện tại có nhiều năng lượng thay đổi; nếu tình cảm biến động, cần phân biệt nhu cầu tự do lành mạnh với phản ứng bốc đồng.':py===7?'Chu kỳ hiện tại thiên về nhìn lại; khoảng riêng có thể hữu ích nếu được giao tiếp rõ, nhưng im lặng kéo dài dễ biến thành xa cách.':py===9?'Chu kỳ hiện tại hợp với việc khép những mô-típ cũ; thay vì cố giữ mọi thứ, hãy xem điều gì cần được sửa, tha thứ hoặc kết thúc có trách nhiệm.':'Chu kỳ hiện tại không phải “năm tình duyên” cố định; hãy dùng nó như nhịp nền để điều chỉnh cách giao tiếp và mức cam kết.';
+    return {title:'Đường tình duyên & cách bạn gắn kết',need:`Linh hồn ${values.soul} (${soul[0]}) gợi nhu cầu bên trong nghiêng về ${soul[1]}. Trong tình cảm, điều quan trọng là biến nhu cầu này thành câu nói/hành vi cụ thể thay vì chờ người kia tự hiểu.`,outer:`Nhân cách ${values.personality} (${personality[0]}) là lớp người khác dễ nhìn thấy. Nếu lớp này khác với điều bạn cần bên trong, bạn có thể tạo cảm giác mạnh mẽ/bình thản hơn thực tế và khiến đối phương đọc sai tín hiệu.`,pattern:`Chủ đạo ${values.life} (${life[0]}) cho thấy mô-típ dài hạn của bạn là ${life[1]}. Ở tuổi ${age}, ${ageFocus}.`,cycleHint,greenFlags:['tôn trọng ranh giới và quyền nói “không”','nói được chuyện tiền bạc, gia đình, thời gian và cam kết mà không né tránh','sau xung đột có hành động sửa chữa chứ không chỉ xin lỗi bằng lời'],redFlags:['buộc bạn phải thu nhỏ bản thân để giữ quan hệ','kiểm soát, gây sợ hãi hoặc làm bạn mất quyền tự quyết','lời nói và hành vi liên tục không nhất quán trong thời gian dài'],disclaimer:'Không có con số nào xác định bạn “sẽ yêu ai” hay “khi nào kết hôn”. Chất lượng tình duyên phụ thuộc vào lựa chọn, kỹ năng giao tiếp, ranh giới, sự an toàn và cách hai người cùng trưởng thành.'};
   }
 
   static expertReading(values,now){
@@ -221,11 +333,29 @@ class NumerologyCalculator{
     const cycles=[{value:values.personalYear,label:'Năm cá nhân',text:MysticalData.CYCLE_TEXT[values.personalYear],meta:String(now.getFullYear())},{value:pm,label:'Tháng cá nhân',text:MysticalData.CYCLE_TEXT[pm],meta:`Tháng ${now.getMonth()+1}`},{value:pd,label:'Ngày cá nhân',text:MysticalData.CYCLE_TEXT[pd],meta:Format.vn(now,{day:'2-digit',month:'2-digit'})}];
     const clean=this.stripName(name),vowels=[...clean].filter(c=>'AEIOUY'.includes(c)).join(''),cons=[...clean].filter(c=>!'AEIOUY'.includes(c)).join('');
     const formulas=[['Số chủ đạo',`digits(${ds}) → tổng ${this.sumDigits(ds)} → ${values.life}`],['Số biểu đạt',`${clean||'—'} → Pythagoras 1–9 → ${values.expression}`],['Số linh hồn',`${vowels||'—'} → nguyên âm → ${values.soul}`],['Số nhân cách',`${cons||'—'} → phụ âm → ${values.personality}`],['Số thái độ',`${Number(ds.split('-')[1])} + ${Number(ds.split('-')[2])} → ${values.attitude}`],['Số trưởng thành',`${values.life} + ${values.expression} → ${values.maturity}`]];
-    return {values,metrics,reading,cycles,formulas,synthesis:this.synthesis(values),genderReading:this.genderInsight(profile.gender,values.life,values.expression,values.soul,values.personality)};
+    const age=this.ageOn(ds,now),ageStage=this.ageStage(age),finance=this.financeGuidance(values,age,now),future=this.futureGuidance(values,age,now),love=this.loveGuidance(values,age,now);
+    return {values,metrics,reading,cycles,formulas,synthesis:this.synthesis(values),genderReading:this.genderInsight(profile.gender,values.life,values.expression,values.soul,values.personality),age,ageStage,finance,future,love};
   }
 }
 
+
+/* ===== models/lunar-converter.js ===== */
+
+class LunarConverter{
+  static jdFromDate(dd,mm,yy){let a=Math.floor((14-mm)/12),y=yy+4800-a,m=mm+12*a-3;let jd=dd+Math.floor((153*m+2)/5)+365*y+Math.floor(y/4)-Math.floor(y/100)+Math.floor(y/400)-32045;if(jd<2299161)jd=dd+Math.floor((153*m+2)/5)+365*y+Math.floor(y/4)-32083;return jd}
+  static newMoon(k){const T=k/1236.85,T2=T*T,T3=T2*T,dr=Math.PI/180;let Jd1=2415020.75933+29.53058868*k+0.0001178*T2-0.000000155*T3;Jd1+=0.00033*Math.sin((166.56+132.87*T-0.009173*T2)*dr);const M=359.2242+29.10535608*k-0.0000333*T2-0.00000347*T3;const Mpr=306.0253+385.81691806*k+0.0107306*T2+0.00001236*T3;const F=21.2964+390.67050646*k-0.0016528*T2-0.00000239*T3;let C1=(0.1734-0.000393*T)*Math.sin(M*dr)+0.0021*Math.sin(2*dr*M);C1=C1-0.4068*Math.sin(Mpr*dr)+0.0161*Math.sin(2*dr*Mpr);C1-=0.0004*Math.sin(3*dr*Mpr);C1+=0.0104*Math.sin(2*dr*F)-0.0051*Math.sin((M+Mpr)*dr)-0.0074*Math.sin((M-Mpr)*dr)+0.0004*Math.sin((2*F+M)*dr)-0.0004*Math.sin((2*F-M)*dr)-0.0006*Math.sin((2*F+Mpr)*dr)+0.0010*Math.sin((2*F-Mpr)*dr)+0.0005*Math.sin((2*Mpr+M)*dr);let dt;if(T<-11)dt=0.001+0.000839*T+0.0002261*T2-0.00000845*T3-0.000000081*T*T3;else dt=-0.000278+0.000265*T+0.000262*T2;return Jd1+C1-dt}
+  static sunLongitude(jdn){const T=(jdn-2451545)/36525,T2=T*T,dr=Math.PI/180,M=357.52910+35999.05030*T-0.0001559*T2-0.00000048*T*T2,L0=280.46645+36000.76983*T+0.0003032*T2;let DL=(1.914600-0.004817*T-0.000014*T2)*Math.sin(dr*M);DL+=(0.019993-0.000101*T)*Math.sin(dr*2*M)+0.000290*Math.sin(dr*3*M);let L=(L0+DL)*dr;return L-Math.PI*2*Math.floor(L/(Math.PI*2))}
+  static getNewMoonDay(k,tz=MysticalData.TZ){return Math.floor(this.newMoon(k)+0.5+tz/24)}
+  static getSunLongitude(day,tz=MysticalData.TZ){return Math.floor(this.sunLongitude(day-0.5-tz/24)/Math.PI*6)}
+  static month11(yy,tz=MysticalData.TZ){const off=this.jdFromDate(31,12,yy)-2415021,k=Math.floor(off/29.530588853),nm=this.getNewMoonDay(k,tz),sl=this.getSunLongitude(nm,tz);return sl>=9?this.getNewMoonDay(k-1,tz):nm}
+  static leapOffset(a11,tz=MysticalData.TZ){const k=Math.floor(0.5+(a11-2415021.076998695)/29.530588853);let last=0,i=1,arc=this.getSunLongitude(this.getNewMoonDay(k+i,tz),tz);do{last=arc;i++;arc=this.getSunLongitude(this.getNewMoonDay(k+i,tz),tz)}while(arc!==last&&i<14);return i-1}
+  static solarToLunar(dd,mm,yy,tz=MysticalData.TZ){const dayNumber=this.jdFromDate(dd,mm,yy),k=Math.floor((dayNumber-2415021.076998695)/29.530588853);let monthStart=this.getNewMoonDay(k+1,tz);if(monthStart>dayNumber)monthStart=this.getNewMoonDay(k,tz);let a11=this.month11(yy,tz),b11=a11,lunarYear;if(a11>=monthStart){lunarYear=yy;a11=this.month11(yy-1,tz)}else{lunarYear=yy+1;b11=this.month11(yy+1,tz)}const lunarDay=dayNumber-monthStart+1,diff=Math.floor((monthStart-a11)/29);let leap=0,lunarMonth=diff+11;if(b11-a11>365){const leapDiff=this.leapOffset(a11,tz);if(diff>=leapDiff){lunarMonth=diff+10;if(diff===leapDiff)leap=1}}if(lunarMonth>12)lunarMonth-=12;if(lunarMonth>=11&&diff<4)lunarYear-=1;return {day:lunarDay,month:lunarMonth,year:lunarYear,leap}}
+  static fromDate(date){return this.solarToLunar(date.getDate(),date.getMonth()+1,date.getFullYear())}
+}
+
+
 /* ===== models/astrology-calculator.js ===== */
+
 /** Pure Can Chi / horoscope model. No DOM access. */
 class AstrologyCalculator{
   static yearCanChi(y){const si=(y+6)%10,bi=(y+8)%12;return this.pack(si,bi)}
@@ -320,7 +450,9 @@ class AstrologyCalculator{
   }
 }
 
+
 /* ===== models/tarot-engine.js ===== */
+
 /** Pure Tarot model. Deterministic by profile + query + calendar day. */
 class TarotEngine{
   static hash(str){let h=2166136261>>>0;for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0}
@@ -376,7 +508,7 @@ class TarotEngine{
     else if(mode==='open'){q=`Không câu hỏi • ${MysticalData.TOPIC_NAME[topic]}`;qKey=`open-${topic}`;positions=['NỀN TẢNG','TRỌNG TÂM HIỆN TẠI','HƯỚNG TIẾP CẬN']}
     else if(mode==='preset'){q=presetQuestion||MysticalData.TAROT_PRESETS[topic][0];qKey=this.normalize(q);positions=['NỀN TẢNG','TRỌNG TÂM HIỆN TẠI','HƯỚNG TIẾP CẬN']}
     else{q=(question||'').trim();if(q.length<6)throw new Error('Hãy nhập câu hỏi rõ hơn (ít nhất 6 ký tự), hoặc chọn Auto/Không câu hỏi.');qKey=this.normalize(q);positions=['NỀN TẢNG','TRỌNG TÂM HIỆN TẠI','HƯỚNG TIẾP CẬN']}
-    const today=Format.iso(date),base=[NumerologyCalculator.stripName(profile.fullName),profile.birthDate,profile.birthTime||'',profile.gender||'',mode,topic,qKey,today].join('|'),seed=this.hash(base),rand=this.rng(seed),pool=MysticalData.TAROT.map((_,i)=>i),picks=[];
+    const today=Format.iso(date),base=[NumerologyCalculator.stripName(profile.fullName),profile.birthDate,profile.birthTime||'',profile.gender||'',profile.identityKey||'',mode,topic,qKey,today].join('|'),seed=this.hash(base),rand=this.rng(seed),pool=MysticalData.TAROT.map((_,i)=>i),picks=[];
     for(let i=0;i<count;i++){const idx=Math.floor(rand()*pool.length),ci=pool.splice(idx,1)[0];picks.push({card:MysticalData.TAROT[ci],cardIndex:ci,reversed:rand()<.32})}
     const meanings=picks.map(p=>p.reversed?p.card[3]:p.card[2]),yc=AstrologyCalculator.yearCanChi(new Date(profile.birthDate+'T12:00:00').getFullYear()),lp=NumerologyCalculator.lifePath(profile.birthDate),context=[mode==='auto'?'Auto toàn cảnh':mode==='open'?'Không câu hỏi':mode==='preset'?'Câu hỏi gợi ý':'Tự đặt câu hỏi',...(mode==='auto'?[]:[MysticalData.TOPIC_NAME[topic]]),`Ngày ${Format.vn(date,{day:'2-digit',month:'2-digit',year:'numeric'})}`,`Hồ sơ ${AstrologyCalculator.genderLabel(profile.gender)}`,`Số chủ đạo ${lp}`,`${yc.stem} ${yc.branch}`];
     const synthesis=this.synthesize(picks,meanings,mode,topic),summary=this.expertSummary({mode,topic,picks,meanings,domains,synthesis});
@@ -385,7 +517,9 @@ class TarotEngine{
   }
 }
 
+
 /* ===== models/compatibility-calculator.js ===== */
+
 /**
  * CompatibilityCalculator
  * Pure reference model for comparing two profiles.
@@ -642,7 +776,9 @@ class CompatibilityCalculator{
   }
 }
 
+
 /* ===== models/date-scorer.js ===== */
+
 /** Transparent reference scorer. Pure model, no DOM. */
 class DateScorer{
   static elementRelation(dayEl,userEl){if(dayEl===userEl)return {score:6,label:`Đồng hành ${dayEl}`,detail:`Can ngày và Can năm sinh cùng hành ${dayEl}`};if(MysticalData.GENERATES[dayEl]===userEl)return {score:10,label:'Ngày sinh trợ tuổi',detail:`${dayEl} sinh ${userEl}: cộng điểm hỗ trợ`};if(MysticalData.GENERATES[userEl]===dayEl)return {score:3,label:'Tuổi sinh cho ngày',detail:`${userEl} sinh ${dayEl}: thuận nhưng hao lực hơn`};if(MysticalData.CONTROLS[dayEl]===userEl)return {score:-10,label:'Ngày khắc tuổi',detail:`${dayEl} khắc ${userEl}: trừ điểm`};if(MysticalData.CONTROLS[userEl]===dayEl)return {score:-4,label:'Tuổi khắc ngày',detail:`${userEl} khắc ${dayEl}: có độ ma sát`};return {score:0,label:'Ngũ hành trung tính',detail:'Không có quan hệ sinh/khắc trực tiếp trong mô hình'}}
@@ -685,26 +821,6 @@ class DateScorer{
   static rank(s){return s>=80?['Rất phù hợp','excellent']:s>=68?['Khá phù hợp','good']:s>=52?['Trung tính','neutral']:['Nên cân nhắc','low']}
 }
 
-/* ===== state/app-state.js ===== */
-const AppState={
-  value:{view:'home',profile:StorageModel.load(),tarot:null,compatibility:null,dates:null,showAllDates:false},
-  listeners:new Set(),
-  get(){return this.value},
-  patch(patch){
-    const changed={};
-    for(const [key,value] of Object.entries(patch)){
-      if(this.value[key]!==value) changed[key]=value;
-    }
-    if(!Object.keys(changed).length) return;
-    this.value={...this.value,...changed};
-    this.listeners.forEach(fn=>fn(this.value,changed));
-  },
-  subscribe(fn){this.listeners.add(fn);return()=>this.listeners.delete(fn)}
-};
-
-/* =========================================================
-   FEATURE CONFIG — function-driven view metadata
-   ========================================================= */
 
 /* ===== config/feature-config.js ===== */
 const FeatureConfig={
@@ -718,6 +834,186 @@ const FeatureConfig={
 /* =========================================================
    --- VIEW --- DOM rendering only. No business calculations.
    ========================================================= */
+
+
+/* ===== views/ui-manager.js ===== */
+
+const UIManager={
+  q(sel,root=document){return root.querySelector(sel)},qa(sel,root=document){return [...root.querySelectorAll(sel)]},
+  setText(sel,text){const el=this.q(sel);if(el)el.textContent=text},setHTML(sel,html){const el=this.q(sel);if(el)el.innerHTML=html},
+  icon(id,cls='icon'){return `<svg class="${cls}"><use href="${id}"/></svg>`},
+  genderLabel(g){return AstrologyCalculator.genderLabel(g)},
+  simpleNeed(n){const map={1:'được tự quyết và có không gian chủ động',2:'được lắng nghe, phối hợp và cảm thấy an toàn',3:'được nói ra cảm xúc và nhận phản hồi rõ ràng',4:'sự ổn định, rõ ràng và lời hứa được thực hiện',5:'tự do, trải nghiệm mới và không bị kiểm soát quá mức',6:'sự quan tâm, trách nhiệm và cảm giác cùng xây dựng',7:'không gian riêng, chiều sâu và sự tin cậy',8:'sự tôn trọng năng lực, mục tiêu và ranh giới',9:'sự đồng cảm, ý nghĩa và tầm nhìn chung',11:'sự tinh tế, đồng cảm và cảm giác được hiểu',22:'một mối quan hệ có nền tảng, kế hoạch và khả năng cùng xây dựng',33:'sự tử tế, chăm sóc lẫn nhau nhưng không hy sinh quá mức'};return map[n]||'sự rõ ràng, tôn trọng và giao tiếp thẳng thắn'},
+  simpleOuter(n){const map={1:'khá độc lập và quyết đoán',2:'mềm mỏng và biết phối hợp',3:'cởi mở, dễ trò chuyện',4:'ổn định và có nguyên tắc',5:'linh hoạt, thích trải nghiệm',6:'biết quan tâm và có trách nhiệm',7:'trầm, quan sát nhiều trước khi mở lòng',8:'mạnh mẽ, thực tế và hướng kết quả',9:'rộng lượng và dễ cảm thông',11:'nhạy cảm và tinh tế',22:'có tổ chức và đáng tin',33:'ấm áp và thích nâng đỡ người khác'};return map[n]||'có cách thể hiện riêng'},
+  render(state,patch={}){
+    const initial=Object.keys(patch).length===0;
+    if(initial||'view' in patch)this.renderView(state.view);
+    if(initial||'profile' in patch){this.renderProfile(state.profile);this.renderHome(state.profile);this.renderNumerology(state.profile);this.renderHoroscope(state.profile);this.renderCompatibilityProfile(state.profile);this.renderDateProfile(state.profile)}
+    if(initial||'tarot' in patch)this.renderTarot(state.tarot);
+    if(initial||'compatibility' in patch)this.renderCompatibility(state.compatibility);
+    if(initial||'dates' in patch||'showAllDates' in patch)this.renderDates(state.dates,state.showAllDates);
+    this.updateTarotModeUI();
+    requestAnimationFrame(()=>this.motion(this.q('.view.active')));
+  },
+  renderView(view){document.body.dataset.view=view;this.qa('.view').forEach(v=>v.classList.toggle('active',v.id===`view-${view}`));this.qa('.nav-link').forEach(b=>b.classList.toggle('active',b.dataset.view===view));window.scrollTo({top:0,behavior:'smooth'})},
+  renderProfile(profile){
+    if(!profile){this.setText('#profileAvatar','?');this.setText('#profileNameTop','Chưa có hồ sơ');this.setText('#profileMetaTop','Thiết lập để cá nhân hóa');return}
+    const year=AstrologyCalculator.yearCanChi(new Date(profile.birthDate+'T12:00:00').getFullYear()),z=AstrologyCalculator.western(profile.birthDate);this.setText('#profileAvatar',profile.fullName.trim().charAt(0).toUpperCase());this.setText('#profileNameTop',profile.fullName);this.setText('#profileMetaTop',`${this.genderLabel(profile.gender)} • ${year.stem} ${year.branch} • ${z.name}${profile.identityKey?' • ID cục bộ':''}`)
+  },
+  renderHome(profile){
+    if(!profile){this.setText('#homeDateLabel','CHƯA CÓ DỮ LIỆU');this.setText('#homeName','Tạo hồ sơ để bắt đầu');this.setText('#homeSummary','Thông tin được dùng chung cho tất cả chức năng.');['#homeLife','#homeYearPillar','#homeLunar','#homeZodiac'].forEach(s=>this.setText(s,'—'));return}
+    const birth=new Date(profile.birthDate+'T12:00:00'),yc=AstrologyCalculator.yearCanChi(birth.getFullYear()),lu=LunarConverter.fromDate(birth),z=AstrologyCalculator.western(profile.birthDate),lp=NumerologyCalculator.lifePath(profile.birthDate);this.setText('#homeDateLabel',`SINH ${Format.vn(birth,{day:'2-digit',month:'2-digit',year:'numeric'})}`);this.setText('#homeName',profile.fullName);this.setText('#homeSummary',`${yc.animal} • ${yc.element} • ${z.name}`);this.setText('#homeLife',lp);this.setText('#homeYearPillar',`${yc.stem} ${yc.branch}`);this.setText('#homeLunar',`${lu.day}/${lu.month}${lu.leap?'N':''}/${lu.year}`);this.setText('#homeZodiac',z.name)
+  },
+  renderResultPanel(type,data,config){
+    if(type==='metrics')return data.map((m,i)=>{const base=m.value>9?NumerologyCalculator.reduce(m.value,false):m.value;const v=Math.max(12,Math.min(100,Math.round(base/9*100)));return `<article class="metric-card ${i===0?'primary-metric':''}" data-tilt data-tilt-strength="4"><div class="metric-top"><div class="donut" style="--v:${v}"><b>${m.value}</b></div><div><small>${m.label}</small><strong>${m.title}</strong></div></div><p>${m.note}</p></article>`}).join('');
+    if(type==='pillars')return data.map(p=>`<article class="pillar-card panel reveal" data-tilt data-tilt-strength="4"><small>${p.label}</small><strong>${p.value}</strong><span>${p.meta}</span><p>${p.description}</p></article>`).join('');
+    return '';
+  },
+  renderNumerology(profile){
+    if(!profile){
+      this.setHTML('#fortuneProfileSummary','<div class="empty-inline">Tạo hồ sơ để bắt đầu. Sau đó chỉ cần đọc 3 phần: Tài chính, 6–12 tháng tới và Tình duyên.</div>');
+      this.setHTML('#fortuneFinance','<div class="empty-inline">Phần này sẽ nói ngắn gọn: nên ưu tiên tiền bạc thế nào và cần tránh gì.</div>');
+      this.setHTML('#fortuneFuture','<div class="empty-inline">Phần này sẽ nói: ở độ tuổi hiện tại, 6–12 tháng tới nên tập trung điều gì.</div>');
+      this.setHTML('#fortuneLove','<div class="empty-inline">Phần này sẽ nói: trong tình cảm bạn thường cần gì, dễ vướng ở đâu và dấu hiệu nào nên quan sát.</div>');
+      this.setHTML('#numerologyReading','Tạo hồ sơ để xem phân tích.');this.setHTML('#cycleStack','');this.setHTML('#numerologyMetrics','');this.setHTML('#numerologyFormula','');this.setHTML('#numerologyInsightGrid','<div class="empty-inline">Tạo hồ sơ để xem ba điểm nổi bật.</div>');this.setHTML('#numerologyAxisBars','');this.setText('#numerologyGenderTitle','Theo hồ sơ');this.setText('#numerologyGenderBadge','Cần hồ sơ');this.setHTML('#numerologyGenderReading','Chọn thông tin hồ sơ để bổ sung lớp diễn giải.');return
+    }
+    const d=NumerologyCalculator.calculate(profile,new Date()),axes=d.synthesis.axes,f=d.finance,u=d.future,l=d.love;
+    const stageTitle={learning:'Đang xây nền',explore:'Đang thử và chọn hướng',build:'Đang xây nền dài hạn',expand:'Đang mở rộng nhưng cần giữ cân bằng',optimize:'Đang tối ưu và củng cố',preserve:'Đang ưu tiên giữ vững và truyền lại giá trị'}[d.ageStage.key]||d.ageStage.label;
+    this.setHTML('#fortuneProfileSummary',`<div class="fortune-summary-main"><span class="fortune-age">${d.age} tuổi</span><div><small>GIAI ĐOẠN HIỆN TẠI</small><strong>${stageTitle}</strong><p>Nếu chỉ nhớ một điều: ${d.ageStage.focus}.</p></div></div><div class="fortune-summary-stats"><span><small>Chủ đạo</small><b>${d.values.life}</b></span><span><small>Năm hiện tại</small><b>${d.values.personalYear}</b></span><span><small>Trưởng thành</small><b>${d.values.maturity}</b></span></div>`);
+    const financeHeadline={learning:'Học quản lý tiền trước khi nghĩ đến kiếm thật nhanh',explore:'Xây nền tài chính trước khi chạy theo cơ hội lớn',build:'Ưu tiên thu nhập bền và tích lũy dài hạn',expand:'Mở rộng có chọn lọc, đừng gánh quá nhiều',optimize:'Giữ thành quả và bỏ bớt khoản kém hiệu quả',preserve:'Ưu tiên an toàn, thanh khoản và bảo toàn nguồn lực'}[d.ageStage.key]||'Ưu tiên nền tài chính ổn định';
+    this.setHTML('#fortuneFinance',`<div class="fortune-simple-lead"><small>KẾT LUẬN</small><strong>${financeHeadline}</strong><p>Ở tuổi ${d.age}, điều quan trọng hơn “kiếm thật nhanh” là chọn cách dùng tiền phù hợp với giai đoạn hiện tại.</p></div><div class="easy-do-dont"><article class="easy-do"><b>Nên làm</b><p>${f.doNow}</p></article><article class="easy-dont"><b>Cần tránh</b><p>${f.avoid}</p></article></div><details class="fortune-why"><summary>Vì sao có gợi ý này?</summary><p>${f.profile}</p><p><b>Nhịp năm ${d.values.personalYear}:</b> ${f.cycleTip}</p><p><b>Điểm dễ quá đà:</b> ${f.risk}</p></details><p class="fortune-section-disclaimer">${f.disclaimer}</p>`);
+    this.setHTML('#fortuneFuture',`<div class="fortune-simple-lead"><small>KẾT LUẬN 6–12 THÁNG</small><strong>${u.should.charAt(0).toUpperCase()+u.should.slice(1)}.</strong><p>Đây là ưu tiên thực hành phù hợp với tuổi ${d.age}; không phải dự đoán sự kiện sẽ xảy ra.</p></div><div class="easy-do-dont"><article class="easy-do"><b>Nên tập trung</b><p>${u.should}.</p></article><article class="easy-dont"><b>Cần tránh</b><p>${u.avoid}.</p></article></div><div class="fortune-checkpoint"><small>MỘT CÂU HỎI ĐỂ TỰ KIỂM TRA</small><p>${u.checkpoint}</p></div><details class="fortune-why"><summary>Vì sao gợi ý này liên quan đến độ tuổi?</summary><p>${u.context}</p></details><p class="fortune-section-disclaimer">${u.disclaimer}</p>`);
+    const need=this.simpleNeed(d.values.soul),outer=this.simpleOuter(d.values.personality);
+    this.setHTML('#fortuneLove',`<div class="fortune-simple-lead"><small>KẾT LUẬN TÌNH DUYÊN</small><strong>Bạn thường cần ${need}.</strong><p>Người khác lại có thể thấy bạn là người ${outer}. Nếu hai hình ảnh này khác nhau, hãy nói rõ nhu cầu thay vì chờ đối phương tự đoán.</p></div><div class="easy-do-dont"><article class="easy-do"><b>Dấu hiệu nên giữ</b><p>${l.greenFlags.slice(0,2).join('; ')}.</p></article><article class="easy-dont"><b>Dấu hiệu cần cẩn trọng</b><p>${l.redFlags.slice(0,2).join('; ')}.</p></article></div><details class="fortune-why"><summary>Xem phân tích tình cảm kỹ hơn</summary><p>${l.pattern}</p><p>${l.cycleHint}</p></details><p class="fortune-section-disclaimer">${l.disclaimer}</p>`);
+    this.setHTML('#numerologyReading',d.reading);
+    this.setText('#currentDateBadge',Format.vn(new Date(),{day:'2-digit',month:'2-digit',year:'numeric'}));
+    this.setHTML('#cycleStack',d.cycles.map(c=>`<article class="cycle-card"><b>${c.value}</b><strong>${c.label}</strong><p>${c.text}</p><span class="chip" style="margin-top:8px">${c.meta}</span></article>`).join(''));
+    this.setText('#numerologyGenderTitle',`${this.genderLabel(profile.gender)} • góc nhìn bổ sung`);this.setText('#numerologyGenderBadge',this.genderLabel(profile.gender));this.setHTML('#numerologyGenderReading',d.genderReading);
+    this.setHTML('#numerologyMetrics',this.renderResultPanel('metrics',d.metrics,FeatureConfig.fortune));
+    this.setHTML('#numerologyFormula',d.formulas.map(x=>`<div class="formula-item"><b>${x[0]}</b><code>${x[1]}</code></div>`).join(''));
+    const inner=axes[1],current=axes[2];
+    const cues=[
+      {label:'CHỦ ĐỀ LẶP LẠI',value:d.synthesis.dominantFamily,detail:`Nhiều chỉ số cùng chạm vào nhóm “${d.synthesis.dominantFamily}”. Hãy xem đây là một chủ đề thường quay lại, không phải nhãn cố định.`},
+      {label:'BÊN TRONG ↔ BÊN NGOÀI',value:inner.score>=80?'Khá liền mạch':inner.score>=58?'Có khác biệt':'Dễ bị hiểu sai',detail:inner.score>=80?'Điều bạn cần bên trong khá dễ thể hiện ra ngoài.':inner.score>=58?'Bạn có thể điều chỉnh cách thể hiện theo bối cảnh; nhớ nói rõ nhu cầu thật.':'Điều bạn cảm nhận và điều người khác thấy có thể khá khác nhau; nên giao tiếp bằng ví dụ cụ thể.'},
+      {label:'GIAI ĐOẠN HIỆN TẠI',value:current.score>=70?'Khá thuận nhịp':'Đang học cách khác',detail:current.score>=70?'Nhịp năm hiện tại khá gần cách bạn vốn vận hành.':'Năm hiện tại yêu cầu bạn dùng thêm một kiểu năng lực khác với thói quen.'}
+    ];
+    this.setHTML('#numerologyInsightGrid',cues.map(x=>`<article class="insight-card fortune-cue" data-tilt data-tilt-strength="3"><small>${x.label}</small><strong>${x.value}</strong><p>${x.detail}</p></article>`).join(''));
+    this.setHTML('#numerologyAxisBars',axes.map(x=>`<div class="axis-row"><div class="axis-meta"><span>${x.label}</span><b>${x.score}</b></div><div class="axis-track"><i style="--axis:${x.score}%"></i></div><p>${x.detail}</p></div>`).join(''));
+  },
+
+  renderHoroscope(profile){
+    if(!profile){this.setText('#horoscopeName','Chưa có dữ liệu');this.setText('#horoscopeSub','Thiết lập ngày sinh để phân tích.');this.setHTML('#horoscopeTags','');this.setHTML('#horoscopePillars',this.renderResultPanel('pillars',[{label:'TUỔI CAN CHI',value:'—',meta:'—',description:'Can Chi năm sinh.'},{label:'NGÀY SINH ÂM LỊCH',value:'—',meta:'UTC+7',description:'Ngày âm quy đổi.'},{label:'CAN CHI NGÀY SINH',value:'—',meta:'—',description:'Can Chi ngày sinh.'},{label:'CAN CHI GIỜ SINH',value:'—',meta:'—',description:'Cần giờ sinh.'}],FeatureConfig.horoscope));this.setHTML('#compatibilityBox','');this.setHTML('#elementBars','');this.setHTML('#horoscopeReading','Chưa đủ dữ liệu.');this.setHTML('#genderAstroBox','');this.setHTML('#genderAstroReading','Chọn giới tính để đánh dấu Cung phi tương ứng.');this.setText('#genderAstroBadge','Cần hồ sơ');this.setHTML('#horoscopeInsightGrid','<div class="empty-inline">Tạo hồ sơ để xem ma trận cấu trúc.</div>');this.setHTML('#horoscopeRelationMatrix','');this.setHTML('#horoscopeEasySummary','<div class="empty-inline">Tạo hồ sơ để xem phần tóm tắt dễ hiểu.</div>');return}
+    const d=AstrologyCalculator.analyze(profile),{yc,dc,hc,lunar,z}=d;const easyTrine=d.tri.members.filter(i=>i!==yc.branchIndex).map(i=>MysticalData.BRANCHES[i]).join(' • ');const easyClash=MysticalData.BRANCHES[d.rel.clash];const easyHarmony=MysticalData.BRANCHES[d.harm];this.setHTML('#horoscopeEasySummary',`<div class="easy-summary-grid"><article class="easy-summary-card primary"><small>BẠN THUỘC TUỔI</small><strong>${yc.stem} ${yc.branch} — ${yc.animal}</strong><p>Theo cách gọi truyền thống, Thiên Can năm thuộc hành ${yc.element}. Đây là tên gọi của hệ Can Chi, không phải kết luận cố định về tính cách.</p></article><article class="easy-summary-card good"><small>NHÓM DỄ HÒA NHỊP</small><strong>${easyTrine} • Lục hợp ${easyHarmony}</strong><p>Tam hợp là nhóm ba Địa Chi thường được xem là dễ tạo liên kết; Lục hợp là một cặp Chi có tính bổ trợ trong hệ truyền thống.</p></article><article class="easy-summary-card watch"><small>CẶP CẦN LINH HOẠT HƠN</small><strong>${yc.branch} ↔ ${easyClash}</strong><p>Đây là cặp đối xung trực tiếp trong vòng 12 Địa Chi. Hãy đọc là “dễ khác nhịp”, không phải “xấu” hay “không hợp”.</p></article></div>`);this.setText('#zodiacOrb',z.symbol);this.setText('#horoscopeName',profile.fullName);this.setText('#horoscopeSub',`${this.genderLabel(profile.gender)} • Dương lịch ${Format.vn(d.birth,{day:'2-digit',month:'2-digit',year:'numeric'})}${profile.birthTime?` • ${profile.birthTime}`:''}${profile.birthPlace?` • ${profile.birthPlace}`:''}`);this.setHTML('#horoscopeTags',[this.genderLabel(profile.gender),`${yc.stem} ${yc.branch}`,yc.element,z.name,`Âm ${lunar.day}/${lunar.month}${lunar.leap?' nhuận':''}`].map(x=>`<span class="chip">${x}</span>`).join(''));
+    const pillars=[{label:'TUỔI CAN CHI',value:`${yc.stem} ${yc.branch}`,meta:`${yc.animal} • Can ${yc.element} • Chi ${MysticalData.BRANCH_ELEMENT[yc.branchIndex]}`,description:`<b>Thiên Can:</b> ${AstrologyCalculator.stemFull(yc.stemIndex)}.<br><b>Địa Chi:</b> ${AstrologyCalculator.branchFull(yc.branchIndex)}.`},{label:'NGÀY SINH ÂM LỊCH',value:`${lunar.day}/${lunar.month}/${lunar.year}${lunar.leap?' N':''}`,meta:lunar.leap?'Tháng nhuận • UTC+7':'Âm lịch Việt Nam • UTC+7',description:'Quy đổi bằng mô hình thiên văn Sóc + kinh độ Mặt Trời.'},{label:'CAN CHI NGÀY SINH',value:`${dc.stem} ${dc.branch}`,meta:`${dc.animal} • Can ${dc.element} • Chi ${MysticalData.BRANCH_ELEMENT[dc.branchIndex]}`,description:`<b>Thiên Can:</b> ${AstrologyCalculator.stemFull(dc.stemIndex)}.<br><b>Địa Chi:</b> ${AstrologyCalculator.branchFull(dc.branchIndex)}.`},{label:'CAN CHI GIỜ SINH',value:hc?`${hc.stem} ${hc.branch}`:'Chưa nhập',meta:hc?`Giờ ${hc.branch} • Can ${hc.element}`:'—',description:hc?`<b>Giờ sinh:</b> ${profile.birthTime}.<br><b>Thiên Can:</b> ${AstrologyCalculator.stemFull(hc.stemIndex)}.`:'Bổ sung giờ sinh để tính Thiên Can và Địa Chi giờ.'}];this.setHTML('#horoscopePillars',this.renderResultPanel('pillars',pillars,FeatureConfig.horoscope));this.setHTML('#horoscopeReading',d.reading);
+    const relHtml=x=>`<div class="relation-item"><div class="relation-label">${x[0]}</div><strong>${x[1]}</strong><p>${x[2]}</p></div>`;this.setHTML('#compatibilityBox',d.relationsMain.map(relHtml).join('')+`<details class="relation-more"><summary>Xem thêm Chi ngày, Chi giờ và ghi chú Nam/Nữ</summary>${d.relationExtra.map(relHtml).join('')}</details>`);
+    this.setText('#genderAstroBadge',`Hồ sơ ${this.genderLabel(profile.gender)}`);this.setHTML('#genderAstroBox',[{g:'male',label:'NAM',kua:d.maleKua},{g:'female',label:'NỮ',kua:d.femaleKua}].map(x=>`<article class="gender-kua ${profile.gender===x.g?'active':''}"><div class="gender-kua-head"><span>${x.label}</span>${profile.gender===x.g?'<b>ĐANG DÙNG</b>':''}</div><strong>Quái số ${x.kua.number} • Cung ${x.kua.gua}</strong><p><b>Ngũ hành cung:</b> ${x.kua.element}</p><p><b>Nhóm mệnh:</b> ${x.kua.group}</p><small><b>Nhóm phương vị:</b> ${x.kua.directions}</small></article>`).join(''));this.setHTML('#genderAstroReading',`<strong>Địa Chi không đổi theo giới tính:</strong> ${AstrologyCalculator.branchFull(yc.branchIndex)} thuộc Tam hợp <strong>${d.tri.name} — ${d.tri.bureau}</strong>; Lục hợp với <strong>${MysticalData.BRANCHES[d.harm]}</strong>; đối xung trực tiếp với <strong>${MysticalData.BRANCHES[d.rel.clash]}</strong>; nằm trong nhóm Tứ hành xung <strong>${d.four.name}</strong>.<br><br>${AstrologyCalculator.genderInsight(profile.gender,d.selectedKua,yc,dc,hc)}`);
+    this.setHTML('#horoscopeInsightGrid',d.deepInsights.map(x=>`<article class="insight-card" data-tilt data-tilt-strength="4"><small>${x.label}</small><strong>${x.value}</strong><p>${x.detail}</p></article>`).join(''));this.setHTML('#horoscopeRelationMatrix',d.relationMatrix.map(x=>`<article class="matrix-card ${x.tone}"><div><small>${x.from} ↔ ${x.to}</small><strong>${x.a} ↔ ${x.b}</strong></div><span>${x.label}</span><p>${x.detail}</p></article>`).join(''));this.setText('#elementTitle',`${yc.element} — Thiên Can năm ${yc.stem}`);this.setHTML('#elementBars',Object.entries(d.counts).map(([e,c])=>`<div class="element-row"><span>${e} — ${c}/${d.total}</span><div class="element-track"><div class="element-fill" style="width:${Math.round(c/d.total*100)}%"></div></div><b>${Math.round(c/d.total*100)}%</b></div>`).join(''));this.setHTML('#elementDesc',`<b>Thiên Can năm:</b> ${AstrologyCalculator.stemFull(yc.stemIndex)} → <b>${yc.element}</b>.<br><b>Thiên Can ngày:</b> ${AstrologyCalculator.stemFull(dc.stemIndex)} → <b>${dc.element}</b>.${hc?`<br><b>Thiên Can giờ:</b> ${AstrologyCalculator.stemFull(hc.stemIndex)} → <b>${hc.element}</b>.`:''}`);this.setText('#westernZodiac',`${z.symbol} ${z.name}`);this.setHTML('#westernDesc',`<b>Khoảng cung:</b> ${AstrologyCalculator.zodiacRange(z.name)}.<br><b>Diễn giải:</b> ${z.text}.`)
+  },
+
+  renderCompatibilityProfile(profile){
+    if(!profile){
+      this.setText('#compatSelfName','Chưa có hồ sơ');
+      this.setText('#compatSelfMeta','Tạo hồ sơ của bạn trước khi so sánh.');
+      this.setHTML('#compatSelfTags','');
+      return;
+    }
+    const birth=new Date(profile.birthDate+'T12:00:00'),yc=AstrologyCalculator.yearCanChi(birth.getFullYear()),z=AstrologyCalculator.western(profile.birthDate),life=NumerologyCalculator.lifePath(profile.birthDate);
+    this.setText('#compatSelfName',profile.fullName);
+    this.setText('#compatSelfMeta',`${Format.vn(birth,{day:'2-digit',month:'2-digit',year:'numeric'})} • ${yc.stem} ${yc.branch} • ${z.name}`);
+    this.setHTML('#compatSelfTags',[`Chủ đạo ${life}`,`Tuổi ${yc.animal}`,yc.element,this.genderLabel(profile.gender),...(profile.identityKey?['ID cục bộ']:[])].map(x=>`<span class="chip">${x}</span>`).join(''));
+  },
+
+  renderCompatibility(result){
+    const empty=this.q('#compatEmpty'),box=this.q('#compatResult'),deep=this.q('#compatDeepPanel');
+    if(!result){
+      empty?.classList.remove('hidden');box?.classList.add('hidden');deep?.classList.add('hidden');
+      this.setHTML('#compatDimensionGrid','');
+      return;
+    }
+    empty?.classList.add('hidden');box?.classList.remove('hidden');deep?.classList.remove('hidden');
+    const {A,B}=result;
+
+    this.animateNumber('#compatScore',result.overall,850);
+    this.setText('#compatLabel',result.label);
+    this.setText('#compatRelationLabel',result.relationLabel);
+    this.setHTML('#compatSummary',result.summary);
+    const ring=this.q('#compatScoreRing');if(ring)ring.style.setProperty('--compat-score',`${result.overall*3.6}deg`);
+    this.setText('#compatDataCompleteness',`${result.dataCompleteness}% dữ liệu đầu vào`);
+    this.setText('#compatMissing',result.missing.length?`Có thể bổ sung: ${result.missing.join(' • ')}.`:'Các trường tùy chọn chính cho mô hình hiện tại đã có đủ.');
+
+    const profileCard=(x,side)=>`<article class="pair-profile ${side}"><small>${side==='self'?'BẠN':'NGƯỜI SO SÁNH'}</small><strong>${x.profile.fullName}</strong><span>${x.year.stem} ${x.year.branch} • ${x.year.animal} • ${x.zodiac.name}</span><div class="pair-mini"><b>Chủ đạo ${x.values.life}</b><b>Biểu đạt ${x.values.expression}</b><b>Linh hồn ${x.values.soul}</b></div></article>`;
+    this.setHTML('#compatPairProfiles',`${profileCard(A,'self')}<div class="pair-link"><svg class="icon icon-lg"><use href="#i-compatibility"/></svg><span>${result.relationLabel}</span></div>${profileCard(B,'partner')}`);
+
+    this.animateNumber('#compatNaturalScore',result.naturalFit,700);
+    this.setText('#compatNaturalText',result.naturalFit>=75?'Nhiều trục chính đang khá cùng nhịp.':result.naturalFit>=60?'Có nền chung nhưng vẫn cần thương lượng ở một số vùng.':'Khác biệt giữa các trục chính khá rõ; nên ưu tiên kiểm chứng ngoài đời thực.');
+    this.setText('#compatEffortLevel',result.effort.label);
+    this.setText('#compatEffortText',result.effort.text);
+    this.setText('#compatPatternTitle',result.pattern.title);
+    this.setText('#compatPatternText',result.pattern.text);
+    this.setHTML('#compatStory',`<span class="eyebrow">CÂU CHUYỆN TƯƠNG TÁC</span><h3>${result.story.title}</h3><p>${result.story.body}</p>`);
+    this.setText('#compatSpreadLabel',result.spreadLabel);
+    const best=result.strengths?.[0],hard=result.challenges?.[0],advice=result.practicalAdvice?.[0]||result.conversationPrompts?.[0]||'Nói rõ nhu cầu và kiểm tra bằng hành vi thực tế.';
+    this.setHTML('#compatEasySummary',`<div class="easy-summary-grid"><article class="easy-summary-card good"><small>DỄ HỢP NHẤT Ở</small><strong>${best?.label||'Chưa đủ dữ liệu'}</strong><p>${best?.short||'Hãy bổ sung dữ liệu và xem lại.'}</p></article><article class="easy-summary-card watch"><small>DỄ VƯỚNG NHẤT Ở</small><strong>${hard?.label||'Chưa đủ dữ liệu'}</strong><p>${hard?.short||'Chưa có điểm cần lưu ý rõ.'}</p></article><article class="easy-summary-card primary"><small>NÊN LÀM GÌ</small><strong>Nói rõ thay vì đoán ý</strong><p>${advice}</p></article></div><p class="analysis-note">Điểm tổng hợp chỉ để tham khảo. Nếu hành vi ngoài đời khác với kết quả này, hãy tin vào hành vi thực tế.</p>`);
+
+    const entries=Object.entries(result.dimensions);
+    this.setHTML('#compatDimensionGrid',entries.map(([key,d])=>`<article class="compat-axis ${key}"><div class="compat-axis-head"><div><small>${d.label}</small><strong>${d.short}</strong></div><b>${d.score}</b></div><div class="compat-track"><i style="--compat-bar:${d.score}%"></i></div><details><summary>Vì sao hệ thống đọc như vậy?</summary><p>${d.detail}</p></details></article>`).join(''));
+
+    this.setHTML('#compatExpertReport',result.expertSections.map((x,i)=>`<section class="expert-section ${i===0?'expert-lead':''}"><span class="expert-kicker">${x.kicker}</span><h4>${x.title}</h4><p>${x.body}</p></section>`).join(''));
+    this.setHTML('#compatStrengths',result.strengths.map(x=>`<li><strong>${x.label}</strong><span>${x.short}</span></li>`).join(''));
+    this.setHTML('#compatChallenges',result.challenges.map(x=>`<li><strong>${x.label}</strong><span>${x.short}</span></li>`).join(''));
+    this.setHTML('#compatConversationPrompts',result.conversationPrompts.map(x=>`<article class="compat-prompt"><b>${String(x.number).padStart(2,'0')}</b><p>${x.question}</p></article>`).join(''));
+    this.setHTML('#compatAdvice',result.practicalAdvice.slice(0,3).map(x=>`<li>${x}</li>`).join(''));
+    this.setHTML('#compatRealityChecklist',result.realityChecklist.map((x,i)=>`<label class="reality-check"><input type="checkbox"><span><b>${String(i+1).padStart(2,'0')}</b>${x}</span></label>`).join(''));
+    this.setHTML('#compatTraditional',`<div class="traditional-grid"><article><small>ĐỊA CHI NĂM</small><strong>${result.branch.label}</strong><p>${result.branch.detail}</p></article><article><small>NGŨ HÀNH THIÊN CAN</small><strong>${result.element.label}</strong><p>${result.element.detail}</p></article><article><small>CUNG PHI</small><strong>${result.kua.label}</strong><p>${result.kua.detail}</p></article><article><small>CUNG HOÀNG ĐẠO</small><strong>${result.zodiac.label}</strong><p>${result.zodiac.detail}</p></article></div>`);
+    this.setText('#compatDisclaimer',result.disclaimer);
+    this.halo('#compatibilityResultPanel');
+    this.motion(this.q('#view-compatibility'));
+  },
+
+  resetCompatibilityForm(){
+    const ids=['#partnerName','#partnerBirthDate','#partnerBirthTime','#partnerBirthPlace','#partnerCccd','#partnerPhone'];ids.forEach(sel=>{const el=this.q(sel);if(el)el.value=''});
+    const gender=this.q('#partnerGender');if(gender)gender.value='';
+    const type=this.q('#relationshipType');if(type)type.value='general';
+  },
+  renderDateProfile(profile){if(!profile){this.setText('#dateProfileBranch','—');this.setText('#dateProfileElement','—');return}const by=AstrologyCalculator.yearCanChi(new Date(profile.birthDate+'T12:00:00').getFullYear());this.setText('#dateProfileBranch',`${by.stem} ${by.branch}`);this.setText('#dateProfileElement',`Tuổi ${by.animal} • ${by.element}`)},
+  tarotSigil(index){const n=index%4;return n===0?`<svg class="icon-xl"><use href="#i-star"/></svg>`:n===1?`<svg class="icon-xl"><use href="#i-moon"/></svg>`:n===2?`<svg class="icon-xl"><use href="#i-compass"/></svg>`:`<svg class="icon-xl"><use href="#i-horoscope"/></svg>`},
+  renderTarot(result){
+    if(!result){this.q('#tarotEmpty')?.classList.remove('hidden');this.q('#tarotResult')?.classList.add('hidden');this.q('#tarotAnalysisPanel')?.classList.add('hidden');return}
+    this.q('#tarotEmpty')?.classList.add('hidden');this.q('#tarotResult')?.classList.remove('hidden');this.q('#tarotAnalysisPanel')?.classList.remove('hidden');this.setText('#tarotResultQuestion',result.q);this.setText('#tarotSessionCode',result.session);this.setText('#tarotSpreadLabel',result.mode==='auto'?'TRẢI BÀI AUTO • 6 LÁ':'TRẢI BÀI 3 LÁ');this.setText('#tarotAnalysisTitle',result.mode==='auto'?'Toàn cảnh theo 6 vùng đời sống':'Mạch chính của trải bài');this.setText('#tarotAnalysisBadge',result.mode==='auto'?'Auto toàn cảnh':result.mode==='open'?'Không câu hỏi':result.mode==='preset'?'Câu hỏi gợi ý':'Tự đặt câu hỏi');this.setHTML('#tarotContext',result.context.map(x=>`<span class="chip">${x}</span>`).join(''));
+    const focusIndex=result.mode==='auto'?(result.picks.findIndex(p=>p.reversed)>=0?result.picks.findIndex(p=>p.reversed):5):1;const focusName=result.mode==='auto'?(result.domains[focusIndex]?.title||'Điều cần chú ý'):'Điều đang chi phối';const focusMeaning=result.meanings[focusIndex]||result.meanings[1]||result.meanings[0];const nextAction=result.actions?.[0]||'Chọn một việc nhỏ nằm trong quyền kiểm soát và làm trong 24–72 giờ.';const caution=result.picks[focusIndex]?.reversed?'Lá ở vùng này đang ngược: nên kiểm tra điều gì đang bị trì hoãn, hiểu sai hoặc vận hành chưa trơn tru.':'Đừng xem lá xuôi là bảo đảm mọi việc sẽ thuận lợi; hãy đối chiếu với dữ kiện thật.';
+    this.setHTML('#tarotEasySummary',`<div class="easy-summary-grid"><article class="easy-summary-card primary"><small>ĐIỀU CHÍNH</small><strong>${focusName}</strong><p>${focusMeaning}.</p></article><article class="easy-summary-card watch"><small>ĐIỀU CẦN CHÚ Ý</small><strong>Kiểm tra trước khi kết luận</strong><p>${caution}</p></article><article class="easy-summary-card good"><small>NÊN LÀM TIẾP</small><strong>Một việc cụ thể</strong><p>${nextAction}</p></article></div>`);
+    this.setHTML('#tarotPatternGrid',result.synthesis.cards.map(x=>`<article class="pattern-card" data-tilt data-tilt-strength="4"><small>${x.label}</small><strong>${x.value}</strong><p>${x.detail}</p></article>`).join(''));const grid=this.q('#tarotGrid');grid.classList.toggle('auto',result.mode==='auto');grid.innerHTML=result.picks.map((p,i)=>{const [roman,name,up,rev]=p.card,meaning=p.reversed?rev:up,interp=result.mode==='auto'?`${result.domains[i].title}: ${result.domains[i].lens}. Lá này nhấn mạnh ${meaning}.`:TarotEngine.topicInterpret(result.topic,i,meaning);return `<article class="tarot-reading"><div class="tarot-position">${result.positions[i]}</div><div class="tarot-card-shell" data-tilt data-tilt-strength="8"><div class="tarot-card-inner"><div class="tarot-card-back"><div class="back-frame">${this.tarotSigil(i)}<span>HUYỀN CÁC</span></div></div><div class="tarot-card-face ${p.reversed?'reversed':''}"><div class="card-roman">${roman}</div><div class="card-sigil">${this.tarotSigil(i)}</div><div class="card-name">${name}</div><div class="card-state">${p.reversed?'LÁ NGƯỢC':'LÁ XUÔI'}</div></div></div></div><div class="tarot-meaning"><strong>${result.mode==='auto'?result.domains[i].title:(p.reversed?'Mặt cần xem lại':'Ý nghĩa trọng tâm')}</strong><p>${meaning}.</p><p>${interp}</p></div></article>`}).join('');this.setHTML('#tarotSummary',result.summary);this.setHTML('#tarotActions',result.actions.map(x=>`<li>${x}</li>`).join(''));this.dealAnimation();this.halo('#tarotResultPanel')
+  },
+  renderDates(data,showAll=false){
+    if(!data){this.setText('#bestDate','—');this.setText('#bestScore','—');this.setText('#goodDateCount','—');this.setText('#bestDateMeta','Chưa phân tích');this.setText('#dateSeparation','—');this.setHTML('#dateEasySummary','<div class="empty-inline">Sau khi phân tích, hệ thống sẽ nói ngắn gọn vì sao nên ưu tiên ngày này.</div>');this.setHTML('#bestHighlights','<div class="empty-inline">Hai lý do chính sẽ xuất hiện sau khi phân tích.</div>');this.setHTML('#dateTop3','<div class="empty-inline">Chưa có dữ liệu Top 3.</div>');this.setHTML('#dateDistribution','');this.setText('#dateDecisionNote','Chọn khoảng ngày ở phía trên để hệ thống so sánh.');this.setHTML('#dateResults','<div class="empty-state compact"><p>Chọn khoảng ngày rồi bấm “Tìm ngày phù hợp”.</p></div>');this.q('#toggleAllDates')?.classList.add('hidden');return}
+    const {best,good,by,purpose,list,top3,distribution,gap,separation}=data;
+    this.setText('#bestDate',Format.vn(best.date,{day:'2-digit',month:'2-digit'}));this.setText('#bestDateMeta',`${Format.vn(best.date,{weekday:'long',day:'2-digit',month:'2-digit',year:'numeric'})} • ${best.dc.stem} ${best.dc.branch}`);this.animateNumber('#bestScore',best.score);this.animateNumber('#goodDateCount',good);this.setText('#dateProfileBranch',`${by.stem} ${by.branch}`);this.setText('#dateProfileElement',`Tuổi ${by.animal} • ${by.element}`);this.setText('#dateRankingTitle',`${MysticalData.PURPOSE_NAME[purpose]} — toàn bộ xếp hạng`);this.setText('#dateSeparation',separation);
+    const second=top3?.[1],third=top3?.[2];const alt=[second,third].filter(Boolean).map(x=>Format.vn(x.date,{day:'2-digit',month:'2-digit'})).join(' hoặc ');const plainDecision=gap<=2?`Ngày đầu chỉ nhỉnh hơn rất ít. Nếu lịch không thuận, bạn có thể chọn ${alt||'một ngày khác trong Top 3'} mà không cần quá bám vào vị trí #1.`:gap<=6?`Ngày này đang đứng đầu, nhưng Top 3 khá gần nhau. Nếu lịch không thuận, ${alt||'hai ngày tiếp theo'} vẫn là phương án hợp lý.`:`Ngày này nổi bật hơn rõ hơn trong mô hình hiện tại. Nếu điều kiện thực tế phù hợp, đây là ngày nên ưu tiên trước.`;this.setHTML('#dateEasySummary',`<article class="easy-summary-card primary"><small>KẾT LUẬN</small><strong>Nên ưu tiên ${Format.vn(best.date,{day:'2-digit',month:'2-digit'})}</strong><p>${plainDecision}</p></article>`);
+    const positive=[...best.factors].filter(f=>f.score>0).sort((a,b)=>b.score-a.score).slice(0,2),negative=[...best.factors].filter(f=>f.score<0).sort((a,b)=>a.score-b.score).slice(0,1),highlights=[...positive,...negative].slice(0,2);
+    this.setHTML('#bestHighlights',(highlights.length?highlights:[...best.factors].slice(0,3)).map(f=>`<article class="date-highlight ${f.score<0?'risk':'plus'}"><span>${f.score<0?'Cần cân nhắc':'Điểm hỗ trợ'}</span><strong>${f.label}</strong><p>${f.detail}</p><b>${f.score>0?'+':''}${f.score}</b></article>`).join(''));
+    this.setHTML('#dateTop3',top3.map((x,i)=>{const [label]=DateScorer.rank(x.score);return `<article class="top3-card rank-${i+1}" data-tilt data-tilt-strength="3"><div class="top3-rank">#${i+1}</div><div><small>${label}</small><strong>${Format.vn(x.date,{day:'2-digit',month:'2-digit'})}</strong><span>${x.dc.stem} ${x.dc.branch}</span></div><b>${x.score}</b></article>`}).join(''));
+    const total=list.length,distItems=[['Rất phù hợp',distribution.excellent,'excellent'],['Khá phù hợp',distribution.good,'good'],['Trung tính',distribution.neutral,'neutral'],['Cân nhắc',distribution.low,'low']];this.setHTML('#dateDistribution',distItems.map(([label,count,cls])=>`<div class="distribution-row ${cls}"><span>${label}<b>${count} ngày</b></span><div><i style="--dist:${total?Math.round(count/total*100):0}%"></i></div></div>`).join(''));
+    const gapMessage=gap<=2?'Ba ngày đầu gần như ngang nhau. Đừng tuyệt đối hóa vị trí #1; hãy chọn ngày thuận tiện hơn về lịch, con người và điều kiện thực tế.':gap<=6?`Ngày đứng đầu chỉ nhỉnh hơn vị trí #2 khoảng ${gap} điểm. Có thể xem Top 3 như một nhóm lựa chọn tốt thay vì cố chốt đúng một ngày.`:`Ngày đứng đầu tạo khoảng cách ${gap} điểm so với vị trí #2, nên nổi bật hơn trong chính mô hình tham khảo này. Vẫn cần ưu tiên điều kiện thực tế.`;
+    this.setHTML('#dateDecisionNote',gapMessage);
+    const visible=showAll?list:list.slice(0,8),toggle=this.q('#toggleAllDates');toggle?.classList.toggle('hidden',list.length<=8);if(toggle)toggle.textContent=showAll?'Thu gọn':'Xem toàn bộ';
+    this.setHTML('#dateResults',visible.map((x,index)=>{const [label,cls]=DateScorer.rank(x.score);return `<article class="date-item"><div class="date-main"><div class="date-cal"><small>${Format.vn(x.date,{month:'short'})}</small><strong>${String(x.date.getDate()).padStart(2,'0')}</strong><small>${Format.vn(x.date,{weekday:'short'})}</small></div><div class="date-info"><strong>${index===0?'★ ':''}${x.dc.stem} ${x.dc.branch} • Âm ${x.lunar.day}/${x.lunar.month}${x.lunar.leap?'N':''}</strong><p>${label}. Mở lý do nếu bạn cần kiểm tra kỹ.</p></div><div class="score ${cls}"><strong>${x.score}</strong><small>${label}</small></div></div><details class="factor-details"><summary>Xem các yếu tố cộng / trừ</summary><div class="score-breakdown">${x.factors.map(f=>`<div class="factor ${f.score>0?'plus':f.score<0?'minus':'zero'}"><span><b>${f.label}</b><br>${f.detail}</span><b>${f.score>0?'+':''}${f.score}</b></div>`).join('')}</div></details></article>`}).join(''));this.halo('#bestDatePanel');this.motion(this.q('#view-dates'))
+  },
+  renderTarotPreset(){const topic=this.q('#tarotTopic')?.value||'general',sel=this.q('#tarotPresetQuestion'),items=MysticalData.TAROT_PRESETS[topic]||MysticalData.TAROT_PRESETS.general,old=sel?.value;if(sel){sel.innerHTML=items.map(q=>`<option value="${q.replace(/"/g,'&quot;')}">${q}</option>`).join('');if(items.includes(old))sel.value=old}},
+  updateTarotModeUI(){const mode=this.q('#tarotMode')?.value||'auto';this.q('#tarotTopicField')?.classList.toggle('hidden',mode==='auto');this.q('#tarotPresetField')?.classList.toggle('hidden',mode!=='preset');this.q('#tarotQuestionField')?.classList.toggle('hidden',mode!=='custom');if(mode==='preset')this.renderTarotPreset();const info={auto:['Auto toàn cảnh 6 lá','Không cần chọn chủ đề hay nhập câu hỏi. Đọc 6 vùng: tổng quan, tình cảm, công việc, tài chính, phát triển và ưu tiên.'],open:['Không câu hỏi • 3 lá','Chỉ cần chọn chủ đề. Ba lá mô tả nền tảng, trọng tâm hiện tại và hướng tiếp cận.'],preset:['Câu hỏi gợi ý • 3 lá','Chọn chủ đề rồi chọn một câu hỏi viết sẵn để trải bài có trọng tâm.'],custom:['Tự đặt câu hỏi • 3 lá','Câu hỏi càng cụ thể, phần diễn giải theo ngữ cảnh càng dễ dùng.']}[mode];this.setHTML('#tarotModeInfo',`<strong>${info[0]}</strong><br>${info[1]}`)},
+  openProfile(profile){if(profile){this.q('#fullName').value=profile.fullName||'';this.q('#birthDate').value=profile.birthDate||'';this.q('#birthTime').value=profile.birthTime||'';this.q('#gender').value=profile.gender||'';this.q('#birthPlace').value=profile.birthPlace||'';if(this.q('#cccd'))this.q('#cccd').value='';if(this.q('#phone'))this.q('#phone').value='';this.setText('#identityStatus',profile.identityKey?`Đã có mã phân biệt cục bộ từ ${profile.identitySource||'thông tin định danh'}. Nhập lại CCCD/SĐT chỉ khi muốn thay đổi mã.`:'Chưa có mã phân biệt cục bộ. Hai trường dưới đây là tùy chọn.');this.q('#privacyAgree').checked=true}else{this.q('#profileForm')?.reset();this.setText('#identityStatus','CCCD/SĐT chỉ dùng để tạo mã phân biệt cục bộ; số gốc không được lưu.')};this.q('#profileModal')?.classList.remove('hidden');document.body.style.overflow='hidden'},
+  closeProfile(){this.q('#profileModal')?.classList.add('hidden');document.body.style.overflow=''},
+  toast(message){alert(message)},
+  motion(scope=document){if(!scope)return;this.qa('.reveal',scope).forEach((el,i)=>{el.classList.remove('visible');el.style.transitionDelay=`${Math.min(i,8)*65}ms`;requestAnimationFrame(()=>el.classList.add('visible'))})},
+  halo(sel){const el=this.q(sel);if(!el)return;el.classList.remove('halo');requestAnimationFrame(()=>el.classList.add('halo'))},
+  animateNumber(sel,to,duration=700){const el=this.q(sel);if(!el)return;const from=Number(el.dataset.n||0),start=performance.now();const tick=now=>{const p=Math.min(1,(now-start)/duration),v=Math.round(from+(to-from)*(1-Math.pow(1-p,3)));el.textContent=v;if(p<1)requestAnimationFrame(tick);else el.dataset.n=String(to)};requestAnimationFrame(tick)},
+  dealAnimation(){const grid=this.q('#tarotGrid');if(!grid)return;grid.classList.add('dealing');const cards=this.qa('.tarot-reading',grid);cards.forEach((card,i)=>{card.classList.remove('dealt','revealed');setTimeout(()=>card.classList.add('dealt'),90+i*120);setTimeout(()=>card.classList.add('revealed'),430+i*145)});setTimeout(()=>grid.classList.remove('dealing'),1250+cards.length*90)},
+  tiltInit(){}
+};
+
+/* =========================================================
+   --- CONTROLLER --- Event delegation + state transitions
+   ========================================================= */
+
 
 /* ===== services/interaction-manager.js ===== */
 /**
@@ -791,184 +1087,9 @@ const InteractionManager={
   }
 };
 
-/* ===== services/service-worker-client.js ===== */
-function registerServiceWorker(){
-  const isWeb = location.protocol === 'http:' || location.protocol === 'https:';
-  if(!isWeb) return;
-
-  // Attach the PWA manifest only on web origins. file:// mode stays completely local.
-  if(!document.querySelector('link[rel="manifest"]')){
-    const link=document.createElement('link');
-    link.rel='manifest';
-    link.href='./manifest.webmanifest';
-    document.head.appendChild(link);
-  }
-
-  if(!('serviceWorker' in navigator) || !window.isSecureContext) return;
-  window.addEventListener('load',()=>{
-    navigator.serviceWorker.register('./sw.js').catch(err=>{
-      console.warn('[Huyen Cac] Service Worker registration skipped:',err.message);
-    });
-  },{once:true});
-}
-
-/* ===== views/ui-manager.js ===== */
-const UIManager={
-  q(sel,root=document){return root.querySelector(sel)},qa(sel,root=document){return [...root.querySelectorAll(sel)]},
-  setText(sel,text){const el=this.q(sel);if(el)el.textContent=text},setHTML(sel,html){const el=this.q(sel);if(el)el.innerHTML=html},
-  icon(id,cls='icon'){return `<svg class="${cls}"><use href="${id}"/></svg>`},
-  genderLabel(g){return AstrologyCalculator.genderLabel(g)},
-  render(state,patch={}){
-    const initial=Object.keys(patch).length===0;
-    if(initial||'view' in patch)this.renderView(state.view);
-    if(initial||'profile' in patch){this.renderProfile(state.profile);this.renderHome(state.profile);this.renderNumerology(state.profile);this.renderHoroscope(state.profile);this.renderCompatibilityProfile(state.profile);this.renderDateProfile(state.profile)}
-    if(initial||'tarot' in patch)this.renderTarot(state.tarot);
-    if(initial||'compatibility' in patch)this.renderCompatibility(state.compatibility);
-    if(initial||'dates' in patch||'showAllDates' in patch)this.renderDates(state.dates,state.showAllDates);
-    this.updateTarotModeUI();
-    requestAnimationFrame(()=>this.motion(this.q('.view.active')));
-  },
-  renderView(view){document.body.dataset.view=view;this.qa('.view').forEach(v=>v.classList.toggle('active',v.id===`view-${view}`));this.qa('.nav-link').forEach(b=>b.classList.toggle('active',b.dataset.view===view));window.scrollTo({top:0,behavior:'smooth'})},
-  renderProfile(profile){
-    if(!profile){this.setText('#profileAvatar','?');this.setText('#profileNameTop','Chưa có hồ sơ');this.setText('#profileMetaTop','Thiết lập để cá nhân hóa');return}
-    const year=AstrologyCalculator.yearCanChi(new Date(profile.birthDate+'T12:00:00').getFullYear()),z=AstrologyCalculator.western(profile.birthDate);this.setText('#profileAvatar',profile.fullName.trim().charAt(0).toUpperCase());this.setText('#profileNameTop',profile.fullName);this.setText('#profileMetaTop',`${this.genderLabel(profile.gender)} • ${year.stem} ${year.branch} • ${z.name}`)
-  },
-  renderHome(profile){
-    if(!profile){this.setText('#homeDateLabel','CHƯA CÓ DỮ LIỆU');this.setText('#homeName','Tạo hồ sơ để bắt đầu');this.setText('#homeSummary','Thông tin được dùng chung cho tất cả chức năng.');['#homeLife','#homeYearPillar','#homeLunar','#homeZodiac'].forEach(s=>this.setText(s,'—'));return}
-    const birth=new Date(profile.birthDate+'T12:00:00'),yc=AstrologyCalculator.yearCanChi(birth.getFullYear()),lu=LunarConverter.fromDate(birth),z=AstrologyCalculator.western(profile.birthDate),lp=NumerologyCalculator.lifePath(profile.birthDate);this.setText('#homeDateLabel',`SINH ${Format.vn(birth,{day:'2-digit',month:'2-digit',year:'numeric'})}`);this.setText('#homeName',profile.fullName);this.setText('#homeSummary',`${yc.animal} • ${yc.element} • ${z.name}`);this.setText('#homeLife',lp);this.setText('#homeYearPillar',`${yc.stem} ${yc.branch}`);this.setText('#homeLunar',`${lu.day}/${lu.month}${lu.leap?'N':''}/${lu.year}`);this.setText('#homeZodiac',z.name)
-  },
-  renderResultPanel(type,data,config){
-    if(type==='metrics')return data.map((m,i)=>{const base=m.value>9?NumerologyCalculator.reduce(m.value,false):m.value;const v=Math.max(12,Math.min(100,Math.round(base/9*100)));return `<article class="metric-card ${i===0?'primary-metric':''}" data-tilt data-tilt-strength="4"><div class="metric-top"><div class="donut" style="--v:${v}"><b>${m.value}</b></div><div><small>${m.label}</small><strong>${m.title}</strong></div></div><p>${m.note}</p></article>`}).join('');
-    if(type==='pillars')return data.map(p=>`<article class="pillar-card panel reveal" data-tilt data-tilt-strength="4"><small>${p.label}</small><strong>${p.value}</strong><span>${p.meta}</span><p>${p.description}</p></article>`).join('');
-    return '';
-  },
-  renderNumerology(profile){
-    if(!profile){this.setHTML('#numerologyReading','Tạo hồ sơ để xem phân tích.');this.setHTML('#cycleStack','');this.setHTML('#numerologyMetrics','');this.setHTML('#numerologyFormula','');this.setHTML('#numerologyInsightGrid','<div class="empty-inline">Tạo hồ sơ để xem ba điểm nổi bật.</div>');this.setHTML('#numerologyAxisBars','');this.setText('#numerologyGenderTitle','Theo hồ sơ');this.setText('#numerologyGenderBadge','Cần hồ sơ');this.setHTML('#numerologyGenderReading','Chọn thông tin hồ sơ để bổ sung lớp diễn giải.');return}
-    const d=NumerologyCalculator.calculate(profile,new Date()),axes=d.synthesis.axes;
-    this.setHTML('#numerologyReading',d.reading);
-    this.setText('#currentDateBadge',Format.vn(new Date(),{day:'2-digit',month:'2-digit',year:'numeric'}));
-    this.setHTML('#cycleStack',d.cycles.map(c=>`<article class="cycle-card"><b>${c.value}</b><strong>${c.label}</strong><p>${c.text}</p><span class="chip" style="margin-top:8px">${c.meta}</span></article>`).join(''));
-    this.setText('#numerologyGenderTitle',`${this.genderLabel(profile.gender)} • góc nhìn bổ sung`);this.setText('#numerologyGenderBadge',this.genderLabel(profile.gender));this.setHTML('#numerologyGenderReading',d.genderReading);
-    this.setHTML('#numerologyMetrics',this.renderResultPanel('metrics',d.metrics,FeatureConfig.fortune));
-    this.setHTML('#numerologyFormula',d.formulas.map(x=>`<div class="formula-item"><b>${x[0]}</b><code>${x[1]}</code></div>`).join(''));
-    const inner=axes[1],current=axes[2];
-    const cues=[
-      {label:'CHỦ ĐỀ LẶP LẠI',value:d.synthesis.dominantFamily,detail:`Nhiều chỉ số cùng chạm vào nhóm “${d.synthesis.dominantFamily}”. Hãy xem đây là một chủ đề thường quay lại trong cách bạn làm việc hoặc phản ứng, không phải nhãn cố định.`},
-      {label:'BÊN TRONG ↔ BÊN NGOÀI',value:inner.score>=80?'Khá liền mạch':inner.score>=58?'Có độ chuyển dịch':'Dễ bị hiểu khác',detail:inner.score>=80?'Nhu cầu bên trong khá dễ biểu lộ ra ngoài; thử chú ý xem bạn có đang mặc định người khác sẽ tự hiểu mình không.':inner.score>=58?'Bạn có khả năng điều chỉnh cách biểu đạt theo bối cảnh; điều cần giữ là nói rõ nhu cầu cốt lõi để không tự mệt vì thích nghi quá nhiều.':'Điều bạn cảm nhận và điều người khác thấy có thể cách nhau khá xa. Giao tiếp bằng ví dụ cụ thể sẽ hiệu quả hơn chờ người khác suy đoán.'},
-      {label:'NHỊP HIỆN TẠI',value:current.score>=70?'Thuận với thói quen':'Đang buộc bạn học thêm',detail:current.score>=70?'Giai đoạn này khá hợp để làm sâu những cách làm đã chứng minh hiệu quả và chọn ít mục tiêu hơn nhưng làm đến nơi.':'Giai đoạn hiện tại có thể tạo cảm giác hơi trái tay. Thay vì xem đó là “xui”, hãy thử nhận diện năng lực mới mà hoàn cảnh đang buộc bạn luyện.'}
-    ];
-    this.setHTML('#numerologyInsightGrid',cues.map(x=>`<article class="insight-card fortune-cue" data-tilt data-tilt-strength="3"><small>${x.label}</small><strong>${x.value}</strong><p>${x.detail}</p></article>`).join(''));
-    this.setHTML('#numerologyAxisBars',axes.map(x=>`<div class="axis-row"><div class="axis-meta"><span>${x.label}</span><b>${x.state} • ${x.score}/100</b></div><div class="axis-track"><i style="--axis:${x.score}%"></i></div><p>${x.detail}</p></div>`).join(''))
-  },
-  renderHoroscope(profile){
-    if(!profile){this.setText('#horoscopeName','Chưa có dữ liệu');this.setText('#horoscopeSub','Thiết lập ngày sinh để phân tích.');this.setHTML('#horoscopeTags','');this.setHTML('#horoscopePillars',this.renderResultPanel('pillars',[{label:'TUỔI CAN CHI',value:'—',meta:'—',description:'Can Chi năm sinh.'},{label:'NGÀY SINH ÂM LỊCH',value:'—',meta:'UTC+7',description:'Ngày âm quy đổi.'},{label:'CAN CHI NGÀY SINH',value:'—',meta:'—',description:'Can Chi ngày sinh.'},{label:'CAN CHI GIỜ SINH',value:'—',meta:'—',description:'Cần giờ sinh.'}],FeatureConfig.horoscope));this.setHTML('#compatibilityBox','');this.setHTML('#elementBars','');this.setHTML('#horoscopeReading','Chưa đủ dữ liệu.');this.setHTML('#genderAstroBox','');this.setHTML('#genderAstroReading','Chọn giới tính để đánh dấu Cung phi tương ứng.');this.setText('#genderAstroBadge','Cần hồ sơ');this.setHTML('#horoscopeInsightGrid','<div class="empty-inline">Tạo hồ sơ để xem ma trận cấu trúc.</div>');this.setHTML('#horoscopeRelationMatrix','');return}
-    const d=AstrologyCalculator.analyze(profile),{yc,dc,hc,lunar,z}=d;this.setText('#zodiacOrb',z.symbol);this.setText('#horoscopeName',profile.fullName);this.setText('#horoscopeSub',`${this.genderLabel(profile.gender)} • Dương lịch ${Format.vn(d.birth,{day:'2-digit',month:'2-digit',year:'numeric'})}${profile.birthTime?` • ${profile.birthTime}`:''}${profile.birthPlace?` • ${profile.birthPlace}`:''}`);this.setHTML('#horoscopeTags',[this.genderLabel(profile.gender),`${yc.stem} ${yc.branch}`,yc.element,z.name,`Âm ${lunar.day}/${lunar.month}${lunar.leap?' nhuận':''}`].map(x=>`<span class="chip">${x}</span>`).join(''));
-    const pillars=[{label:'TUỔI CAN CHI',value:`${yc.stem} ${yc.branch}`,meta:`${yc.animal} • Can ${yc.element} • Chi ${MysticalData.BRANCH_ELEMENT[yc.branchIndex]}`,description:`<b>Thiên Can:</b> ${AstrologyCalculator.stemFull(yc.stemIndex)}.<br><b>Địa Chi:</b> ${AstrologyCalculator.branchFull(yc.branchIndex)}.`},{label:'NGÀY SINH ÂM LỊCH',value:`${lunar.day}/${lunar.month}/${lunar.year}${lunar.leap?' N':''}`,meta:lunar.leap?'Tháng nhuận • UTC+7':'Âm lịch Việt Nam • UTC+7',description:'Quy đổi bằng mô hình thiên văn Sóc + kinh độ Mặt Trời.'},{label:'CAN CHI NGÀY SINH',value:`${dc.stem} ${dc.branch}`,meta:`${dc.animal} • Can ${dc.element} • Chi ${MysticalData.BRANCH_ELEMENT[dc.branchIndex]}`,description:`<b>Thiên Can:</b> ${AstrologyCalculator.stemFull(dc.stemIndex)}.<br><b>Địa Chi:</b> ${AstrologyCalculator.branchFull(dc.branchIndex)}.`},{label:'CAN CHI GIỜ SINH',value:hc?`${hc.stem} ${hc.branch}`:'Chưa nhập',meta:hc?`Giờ ${hc.branch} • Can ${hc.element}`:'—',description:hc?`<b>Giờ sinh:</b> ${profile.birthTime}.<br><b>Thiên Can:</b> ${AstrologyCalculator.stemFull(hc.stemIndex)}.`:'Bổ sung giờ sinh để tính Thiên Can và Địa Chi giờ.'}];this.setHTML('#horoscopePillars',this.renderResultPanel('pillars',pillars,FeatureConfig.horoscope));this.setHTML('#horoscopeReading',d.reading);
-    const relHtml=x=>`<div class="relation-item"><div class="relation-label">${x[0]}</div><strong>${x[1]}</strong><p>${x[2]}</p></div>`;this.setHTML('#compatibilityBox',d.relationsMain.map(relHtml).join('')+`<details class="relation-more"><summary>Xem thêm Chi ngày, Chi giờ và ghi chú Nam/Nữ</summary>${d.relationExtra.map(relHtml).join('')}</details>`);
-    this.setText('#genderAstroBadge',`Hồ sơ ${this.genderLabel(profile.gender)}`);this.setHTML('#genderAstroBox',[{g:'male',label:'NAM',kua:d.maleKua},{g:'female',label:'NỮ',kua:d.femaleKua}].map(x=>`<article class="gender-kua ${profile.gender===x.g?'active':''}"><div class="gender-kua-head"><span>${x.label}</span>${profile.gender===x.g?'<b>ĐANG DÙNG</b>':''}</div><strong>Quái số ${x.kua.number} • Cung ${x.kua.gua}</strong><p><b>Ngũ hành cung:</b> ${x.kua.element}</p><p><b>Nhóm mệnh:</b> ${x.kua.group}</p><small><b>Nhóm phương vị:</b> ${x.kua.directions}</small></article>`).join(''));this.setHTML('#genderAstroReading',`<strong>Địa Chi không đổi theo giới tính:</strong> ${AstrologyCalculator.branchFull(yc.branchIndex)} thuộc Tam hợp <strong>${d.tri.name} — ${d.tri.bureau}</strong>; Lục hợp với <strong>${MysticalData.BRANCHES[d.harm]}</strong>; đối xung trực tiếp với <strong>${MysticalData.BRANCHES[d.rel.clash]}</strong>; nằm trong nhóm Tứ hành xung <strong>${d.four.name}</strong>.<br><br>${AstrologyCalculator.genderInsight(profile.gender,d.selectedKua,yc,dc,hc)}`);
-    this.setHTML('#horoscopeInsightGrid',d.deepInsights.map(x=>`<article class="insight-card" data-tilt data-tilt-strength="4"><small>${x.label}</small><strong>${x.value}</strong><p>${x.detail}</p></article>`).join(''));this.setHTML('#horoscopeRelationMatrix',d.relationMatrix.map(x=>`<article class="matrix-card ${x.tone}"><div><small>${x.from} ↔ ${x.to}</small><strong>${x.a} ↔ ${x.b}</strong></div><span>${x.label}</span><p>${x.detail}</p></article>`).join(''));this.setText('#elementTitle',`${yc.element} — Thiên Can năm ${yc.stem}`);this.setHTML('#elementBars',Object.entries(d.counts).map(([e,c])=>`<div class="element-row"><span>${e} — ${c}/${d.total}</span><div class="element-track"><div class="element-fill" style="width:${Math.round(c/d.total*100)}%"></div></div><b>${Math.round(c/d.total*100)}%</b></div>`).join(''));this.setHTML('#elementDesc',`<b>Thiên Can năm:</b> ${AstrologyCalculator.stemFull(yc.stemIndex)} → <b>${yc.element}</b>.<br><b>Thiên Can ngày:</b> ${AstrologyCalculator.stemFull(dc.stemIndex)} → <b>${dc.element}</b>.${hc?`<br><b>Thiên Can giờ:</b> ${AstrologyCalculator.stemFull(hc.stemIndex)} → <b>${hc.element}</b>.`:''}`);this.setText('#westernZodiac',`${z.symbol} ${z.name}`);this.setHTML('#westernDesc',`<b>Khoảng cung:</b> ${AstrologyCalculator.zodiacRange(z.name)}.<br><b>Diễn giải:</b> ${z.text}.`)
-  },
-
-  renderCompatibilityProfile(profile){
-    if(!profile){
-      this.setText('#compatSelfName','Chưa có hồ sơ');
-      this.setText('#compatSelfMeta','Tạo hồ sơ của bạn trước khi so sánh.');
-      this.setHTML('#compatSelfTags','');
-      return;
-    }
-    const birth=new Date(profile.birthDate+'T12:00:00'),yc=AstrologyCalculator.yearCanChi(birth.getFullYear()),z=AstrologyCalculator.western(profile.birthDate),life=NumerologyCalculator.lifePath(profile.birthDate);
-    this.setText('#compatSelfName',profile.fullName);
-    this.setText('#compatSelfMeta',`${Format.vn(birth,{day:'2-digit',month:'2-digit',year:'numeric'})} • ${yc.stem} ${yc.branch} • ${z.name}`);
-    this.setHTML('#compatSelfTags',[`Chủ đạo ${life}`,`Tuổi ${yc.animal}`,yc.element,this.genderLabel(profile.gender)].map(x=>`<span class="chip">${x}</span>`).join(''));
-  },
-
-  renderCompatibility(result){
-    const empty=this.q('#compatEmpty'),box=this.q('#compatResult'),deep=this.q('#compatDeepPanel');
-    if(!result){
-      empty?.classList.remove('hidden');box?.classList.add('hidden');deep?.classList.add('hidden');
-      this.setHTML('#compatDimensionGrid','');
-      return;
-    }
-    empty?.classList.add('hidden');box?.classList.remove('hidden');deep?.classList.remove('hidden');
-    const {A,B}=result;
-
-    this.animateNumber('#compatScore',result.overall,850);
-    this.setText('#compatLabel',result.label);
-    this.setText('#compatRelationLabel',result.relationLabel);
-    this.setHTML('#compatSummary',result.summary);
-    const ring=this.q('#compatScoreRing');if(ring)ring.style.setProperty('--compat-score',`${result.overall*3.6}deg`);
-    this.setText('#compatDataCompleteness',`${result.dataCompleteness}% dữ liệu đầu vào`);
-    this.setText('#compatMissing',result.missing.length?`Có thể bổ sung: ${result.missing.join(' • ')}.`:'Các trường tùy chọn chính cho mô hình hiện tại đã có đủ.');
-
-    const profileCard=(x,side)=>`<article class="pair-profile ${side}"><small>${side==='self'?'BẠN':'NGƯỜI SO SÁNH'}</small><strong>${x.profile.fullName}</strong><span>${x.year.stem} ${x.year.branch} • ${x.year.animal} • ${x.zodiac.name}</span><div class="pair-mini"><b>Chủ đạo ${x.values.life}</b><b>Biểu đạt ${x.values.expression}</b><b>Linh hồn ${x.values.soul}</b></div></article>`;
-    this.setHTML('#compatPairProfiles',`${profileCard(A,'self')}<div class="pair-link"><svg class="icon icon-lg"><use href="#i-compatibility"/></svg><span>${result.relationLabel}</span></div>${profileCard(B,'partner')}`);
-
-    this.animateNumber('#compatNaturalScore',result.naturalFit,700);
-    this.setText('#compatNaturalText',result.naturalFit>=75?'Nhiều trục chính đang khá cùng nhịp.':result.naturalFit>=60?'Có nền chung nhưng vẫn cần thương lượng ở một số vùng.':'Khác biệt giữa các trục chính khá rõ; nên ưu tiên kiểm chứng ngoài đời thực.');
-    this.setText('#compatEffortLevel',result.effort.label);
-    this.setText('#compatEffortText',result.effort.text);
-    this.setText('#compatPatternTitle',result.pattern.title);
-    this.setText('#compatPatternText',result.pattern.text);
-    this.setHTML('#compatStory',`<span class="eyebrow">CÂU CHUYỆN TƯƠNG TÁC</span><h3>${result.story.title}</h3><p>${result.story.body}</p>`);
-    this.setText('#compatSpreadLabel',result.spreadLabel);
-
-    const entries=Object.entries(result.dimensions);
-    this.setHTML('#compatDimensionGrid',entries.map(([key,d])=>`<article class="compat-axis ${key}"><div class="compat-axis-head"><div><small>${d.label}</small><strong>${d.short}</strong></div><b>${d.score}</b></div><div class="compat-track"><i style="--compat-bar:${d.score}%"></i></div><details><summary>Vì sao hệ thống đọc như vậy?</summary><p>${d.detail}</p></details></article>`).join(''));
-
-    this.setHTML('#compatExpertReport',result.expertSections.map((x,i)=>`<section class="expert-section ${i===0?'expert-lead':''}"><span class="expert-kicker">${x.kicker}</span><h4>${x.title}</h4><p>${x.body}</p></section>`).join(''));
-    this.setHTML('#compatStrengths',result.strengths.map(x=>`<li><strong>${x.label}</strong><span>${x.short}</span></li>`).join(''));
-    this.setHTML('#compatChallenges',result.challenges.map(x=>`<li><strong>${x.label}</strong><span>${x.short}</span></li>`).join(''));
-    this.setHTML('#compatConversationPrompts',result.conversationPrompts.map(x=>`<article class="compat-prompt"><b>${String(x.number).padStart(2,'0')}</b><p>${x.question}</p></article>`).join(''));
-    this.setHTML('#compatAdvice',result.practicalAdvice.slice(0,3).map(x=>`<li>${x}</li>`).join(''));
-    this.setHTML('#compatRealityChecklist',result.realityChecklist.map((x,i)=>`<label class="reality-check"><input type="checkbox"><span><b>${String(i+1).padStart(2,'0')}</b>${x}</span></label>`).join(''));
-    this.setHTML('#compatTraditional',`<div class="traditional-grid"><article><small>ĐỊA CHI NĂM</small><strong>${result.branch.label}</strong><p>${result.branch.detail}</p></article><article><small>NGŨ HÀNH THIÊN CAN</small><strong>${result.element.label}</strong><p>${result.element.detail}</p></article><article><small>CUNG PHI</small><strong>${result.kua.label}</strong><p>${result.kua.detail}</p></article><article><small>CUNG HOÀNG ĐẠO</small><strong>${result.zodiac.label}</strong><p>${result.zodiac.detail}</p></article></div>`);
-    this.setText('#compatDisclaimer',result.disclaimer);
-    this.halo('#compatibilityResultPanel');
-    this.motion(this.q('#view-compatibility'));
-  },
-
-  resetCompatibilityForm(){
-    const ids=['#partnerName','#partnerBirthDate','#partnerBirthTime','#partnerBirthPlace'];ids.forEach(sel=>{const el=this.q(sel);if(el)el.value=''});
-    const gender=this.q('#partnerGender');if(gender)gender.value='';
-    const type=this.q('#relationshipType');if(type)type.value='general';
-  },
-  renderDateProfile(profile){if(!profile){this.setText('#dateProfileBranch','—');this.setText('#dateProfileElement','—');return}const by=AstrologyCalculator.yearCanChi(new Date(profile.birthDate+'T12:00:00').getFullYear());this.setText('#dateProfileBranch',`${by.stem} ${by.branch}`);this.setText('#dateProfileElement',`Tuổi ${by.animal} • ${by.element}`)},
-  tarotSigil(index){const n=index%4;return n===0?`<svg class="icon-xl"><use href="#i-star"/></svg>`:n===1?`<svg class="icon-xl"><use href="#i-moon"/></svg>`:n===2?`<svg class="icon-xl"><use href="#i-compass"/></svg>`:`<svg class="icon-xl"><use href="#i-horoscope"/></svg>`},
-  renderTarot(result){
-    if(!result){this.q('#tarotEmpty')?.classList.remove('hidden');this.q('#tarotResult')?.classList.add('hidden');this.q('#tarotAnalysisPanel')?.classList.add('hidden');return}
-    this.q('#tarotEmpty')?.classList.add('hidden');this.q('#tarotResult')?.classList.remove('hidden');this.q('#tarotAnalysisPanel')?.classList.remove('hidden');this.setText('#tarotResultQuestion',result.q);this.setText('#tarotSessionCode',result.session);this.setText('#tarotSpreadLabel',result.mode==='auto'?'TRẢI BÀI AUTO • 6 LÁ':'TRẢI BÀI 3 LÁ');this.setText('#tarotAnalysisTitle',result.mode==='auto'?'Toàn cảnh theo 6 vùng đời sống':'Mạch chính của trải bài');this.setText('#tarotAnalysisBadge',result.mode==='auto'?'Auto toàn cảnh':result.mode==='open'?'Không câu hỏi':result.mode==='preset'?'Câu hỏi gợi ý':'Tự đặt câu hỏi');this.setHTML('#tarotContext',result.context.map(x=>`<span class="chip">${x}</span>`).join(''));
-    this.setHTML('#tarotPatternGrid',result.synthesis.cards.map(x=>`<article class="pattern-card" data-tilt data-tilt-strength="4"><small>${x.label}</small><strong>${x.value}</strong><p>${x.detail}</p></article>`).join(''));const grid=this.q('#tarotGrid');grid.classList.toggle('auto',result.mode==='auto');grid.innerHTML=result.picks.map((p,i)=>{const [roman,name,up,rev]=p.card,meaning=p.reversed?rev:up,interp=result.mode==='auto'?`${result.domains[i].title}: ${result.domains[i].lens}. Lá này nhấn mạnh ${meaning}.`:TarotEngine.topicInterpret(result.topic,i,meaning);return `<article class="tarot-reading"><div class="tarot-position">${result.positions[i]}</div><div class="tarot-card-shell" data-tilt data-tilt-strength="8"><div class="tarot-card-inner"><div class="tarot-card-back"><div class="back-frame">${this.tarotSigil(i)}<span>HUYỀN CÁC</span></div></div><div class="tarot-card-face ${p.reversed?'reversed':''}"><div class="card-roman">${roman}</div><div class="card-sigil">${this.tarotSigil(i)}</div><div class="card-name">${name}</div><div class="card-state">${p.reversed?'LÁ NGƯỢC':'LÁ XUÔI'}</div></div></div></div><div class="tarot-meaning"><strong>${result.mode==='auto'?result.domains[i].title:(p.reversed?'Mặt cần xem lại':'Ý nghĩa trọng tâm')}</strong><p>${meaning}.</p><p>${interp}</p></div></article>`}).join('');this.setHTML('#tarotSummary',result.summary);this.setHTML('#tarotActions',result.actions.map(x=>`<li>${x}</li>`).join(''));this.dealAnimation();this.halo('#tarotResultPanel')
-  },
-  renderDates(data,showAll=false){
-    if(!data){this.setText('#bestDate','—');this.setText('#bestScore','—');this.setText('#goodDateCount','—');this.setText('#bestDateMeta','Chưa phân tích');this.setText('#dateSeparation','—');this.setHTML('#bestHighlights','<div class="empty-inline">Các lý do chính sẽ xuất hiện sau khi phân tích.</div>');this.setHTML('#dateTop3','<div class="empty-inline">Chưa có dữ liệu Top 3.</div>');this.setHTML('#dateDistribution','');this.setText('#dateDecisionNote','Chọn khoảng ngày ở phía trên để hệ thống so sánh.');this.setHTML('#dateResults','<div class="empty-state compact"><p>Chọn khoảng ngày rồi bấm “Tìm ngày phù hợp”.</p></div>');this.q('#toggleAllDates')?.classList.add('hidden');return}
-    const {best,good,by,purpose,list,top3,distribution,gap,separation}=data;
-    this.setText('#bestDate',Format.vn(best.date,{day:'2-digit',month:'2-digit'}));this.setText('#bestDateMeta',`${Format.vn(best.date,{weekday:'long',day:'2-digit',month:'2-digit',year:'numeric'})} • ${best.dc.stem} ${best.dc.branch}`);this.animateNumber('#bestScore',best.score);this.animateNumber('#goodDateCount',good);this.setText('#dateProfileBranch',`${by.stem} ${by.branch}`);this.setText('#dateProfileElement',`Tuổi ${by.animal} • ${by.element}`);this.setText('#dateRankingTitle',`${MysticalData.PURPOSE_NAME[purpose]} — toàn bộ xếp hạng`);this.setText('#dateSeparation',separation);
-    const positive=[...best.factors].filter(f=>f.score>0).sort((a,b)=>b.score-a.score).slice(0,2),negative=[...best.factors].filter(f=>f.score<0).sort((a,b)=>a.score-b.score).slice(0,1),highlights=[...positive,...negative];
-    this.setHTML('#bestHighlights',(highlights.length?highlights:[...best.factors].slice(0,3)).map(f=>`<article class="date-highlight ${f.score<0?'risk':'plus'}"><span>${f.score<0?'Cần cân nhắc':'Điểm hỗ trợ'}</span><strong>${f.label}</strong><p>${f.detail}</p><b>${f.score>0?'+':''}${f.score}</b></article>`).join(''));
-    this.setHTML('#dateTop3',top3.map((x,i)=>{const [label]=DateScorer.rank(x.score);return `<article class="top3-card rank-${i+1}" data-tilt data-tilt-strength="3"><div class="top3-rank">#${i+1}</div><div><small>${label}</small><strong>${Format.vn(x.date,{day:'2-digit',month:'2-digit'})}</strong><span>${x.dc.stem} ${x.dc.branch}</span></div><b>${x.score}</b></article>`}).join(''));
-    const total=list.length,distItems=[['Rất phù hợp',distribution.excellent,'excellent'],['Khá phù hợp',distribution.good,'good'],['Trung tính',distribution.neutral,'neutral'],['Cân nhắc',distribution.low,'low']];this.setHTML('#dateDistribution',distItems.map(([label,count,cls])=>`<div class="distribution-row ${cls}"><span>${label}<b>${count} ngày</b></span><div><i style="--dist:${total?Math.round(count/total*100):0}%"></i></div></div>`).join(''));
-    const gapMessage=gap<=2?'Ba ngày đầu gần như ngang nhau. Đừng tuyệt đối hóa vị trí #1; hãy chọn ngày thuận tiện hơn về lịch, con người và điều kiện thực tế.':gap<=6?`Ngày đứng đầu chỉ nhỉnh hơn vị trí #2 khoảng ${gap} điểm. Có thể xem Top 3 như một nhóm lựa chọn tốt thay vì cố chốt đúng một ngày.`:`Ngày đứng đầu tạo khoảng cách ${gap} điểm so với vị trí #2, nên nổi bật hơn trong chính mô hình tham khảo này. Vẫn cần ưu tiên điều kiện thực tế.`;
-    this.setHTML('#dateDecisionNote',gapMessage);
-    const visible=showAll?list:list.slice(0,8),toggle=this.q('#toggleAllDates');toggle?.classList.toggle('hidden',list.length<=8);if(toggle)toggle.textContent=showAll?'Thu gọn':'Xem toàn bộ';
-    this.setHTML('#dateResults',visible.map((x,index)=>{const [label,cls]=DateScorer.rank(x.score);return `<article class="date-item"><div class="date-main"><div class="date-cal"><small>${Format.vn(x.date,{month:'short'})}</small><strong>${String(x.date.getDate()).padStart(2,'0')}</strong><small>${Format.vn(x.date,{weekday:'short'})}</small></div><div class="date-info"><strong>${index===0?'★ ':''}${x.dc.stem} ${x.dc.branch} • Âm ${x.lunar.day}/${x.lunar.month}${x.lunar.leap?'N':''}</strong><p>${label}. Mở lý do nếu bạn cần kiểm tra kỹ.</p></div><div class="score ${cls}"><strong>${x.score}</strong><small>${label}</small></div></div><details class="factor-details"><summary>Xem các yếu tố cộng / trừ</summary><div class="score-breakdown">${x.factors.map(f=>`<div class="factor ${f.score>0?'plus':f.score<0?'minus':'zero'}"><span><b>${f.label}</b><br>${f.detail}</span><b>${f.score>0?'+':''}${f.score}</b></div>`).join('')}</div></details></article>`}).join(''));this.halo('#bestDatePanel');this.motion(this.q('#view-dates'))
-  },
-  renderTarotPreset(){const topic=this.q('#tarotTopic')?.value||'general',sel=this.q('#tarotPresetQuestion'),items=MysticalData.TAROT_PRESETS[topic]||MysticalData.TAROT_PRESETS.general,old=sel?.value;if(sel){sel.innerHTML=items.map(q=>`<option value="${q.replace(/"/g,'&quot;')}">${q}</option>`).join('');if(items.includes(old))sel.value=old}},
-  updateTarotModeUI(){const mode=this.q('#tarotMode')?.value||'auto';this.q('#tarotTopicField')?.classList.toggle('hidden',mode==='auto');this.q('#tarotPresetField')?.classList.toggle('hidden',mode!=='preset');this.q('#tarotQuestionField')?.classList.toggle('hidden',mode!=='custom');if(mode==='preset')this.renderTarotPreset();const info={auto:['Auto toàn cảnh 6 lá','Không cần chọn chủ đề hay nhập câu hỏi. Đọc 6 vùng: tổng quan, tình cảm, công việc, tài chính, phát triển và ưu tiên.'],open:['Không câu hỏi • 3 lá','Chỉ cần chọn chủ đề. Ba lá mô tả nền tảng, trọng tâm hiện tại và hướng tiếp cận.'],preset:['Câu hỏi gợi ý • 3 lá','Chọn chủ đề rồi chọn một câu hỏi viết sẵn để trải bài có trọng tâm.'],custom:['Tự đặt câu hỏi • 3 lá','Câu hỏi càng cụ thể, phần diễn giải theo ngữ cảnh càng dễ dùng.']}[mode];this.setHTML('#tarotModeInfo',`<strong>${info[0]}</strong><br>${info[1]}`)},
-  openProfile(profile){if(profile){this.q('#fullName').value=profile.fullName||'';this.q('#birthDate').value=profile.birthDate||'';this.q('#birthTime').value=profile.birthTime||'';this.q('#gender').value=profile.gender||'';this.q('#birthPlace').value=profile.birthPlace||'';this.q('#privacyAgree').checked=true}else this.q('#profileForm')?.reset();this.q('#profileModal')?.classList.remove('hidden');document.body.style.overflow='hidden'},
-  closeProfile(){this.q('#profileModal')?.classList.add('hidden');document.body.style.overflow=''},
-  toast(message){alert(message)},
-  motion(scope=document){if(!scope)return;this.qa('.reveal',scope).forEach((el,i)=>{el.classList.remove('visible');el.style.transitionDelay=`${Math.min(i,8)*65}ms`;requestAnimationFrame(()=>el.classList.add('visible'))})},
-  halo(sel){const el=this.q(sel);if(!el)return;el.classList.remove('halo');requestAnimationFrame(()=>el.classList.add('halo'))},
-  animateNumber(sel,to,duration=700){const el=this.q(sel);if(!el)return;const from=Number(el.dataset.n||0),start=performance.now();const tick=now=>{const p=Math.min(1,(now-start)/duration),v=Math.round(from+(to-from)*(1-Math.pow(1-p,3)));el.textContent=v;if(p<1)requestAnimationFrame(tick);else el.dataset.n=String(to)};requestAnimationFrame(tick)},
-  dealAnimation(){const grid=this.q('#tarotGrid');if(!grid)return;grid.classList.add('dealing');const cards=this.qa('.tarot-reading',grid);cards.forEach((card,i)=>{card.classList.remove('dealt','revealed');setTimeout(()=>card.classList.add('dealt'),90+i*120);setTimeout(()=>card.classList.add('revealed'),430+i*145)});setTimeout(()=>grid.classList.remove('dealing'),1250+cards.length*90)},
-  tiltInit(){}
-};
-
-/* =========================================================
-   --- CONTROLLER --- Event delegation + state transitions
-   ========================================================= */
 
 /* ===== controllers/app-controller.js ===== */
+
 const AppController={
   init(){
     AppState.subscribe((state,patch)=>UIManager.render(state,patch));
@@ -1017,15 +1138,23 @@ const AppController={
       if(e.target.id==='tarotTopic'&&UIManager.q('#tarotMode')?.value==='preset')UIManager.renderTarotPreset();
     });
 
-    document.addEventListener('submit',e=>{
+    document.addEventListener('submit',async e=>{
       if(e.target.id!=='profileForm')return;
       e.preventDefault();
+      const previous=AppState.get().profile||{};
+      const fullName=UIManager.q('#fullName').value.trim(),birthDate=UIManager.q('#birthDate').value;
+      const cccd=UIManager.q('#cccd')?.value||'',phone=UIManager.q('#phone')?.value||'';
+      const hasIdentityInput=Boolean(Identity.digits(cccd)||Identity.digits(phone));
+      const identityKey=hasIdentityInput?await Identity.fingerprint({cccd,phone,fullName,birthDate}):(previous.identityKey||'');
+      const identitySource=hasIdentityInput?Identity.sourceLabel(cccd,phone):(previous.identitySource||'');
       const profile={
-        fullName:UIManager.q('#fullName').value.trim(),
-        birthDate:UIManager.q('#birthDate').value,
+        fullName,
+        birthDate,
         birthTime:UIManager.q('#birthTime').value,
         gender:UIManager.q('#gender').value,
-        birthPlace:UIManager.q('#birthPlace').value.trim()
+        birthPlace:UIManager.q('#birthPlace').value.trim(),
+        identityKey,
+        identitySource
       };
       StorageModel.save(profile);
       AppState.patch({profile,tarot:null,compatibility:null,dates:null});
@@ -1060,7 +1189,7 @@ const AppController={
     }catch(err){UIManager.toast(err.message)}
   },
 
-  analyzeCompatibility(){
+  async analyzeCompatibility(){
     const profile=this.requireProfile();if(!profile)return;
     const partner={
       fullName:UIManager.q('#partnerName')?.value.trim()||'',
@@ -1069,6 +1198,9 @@ const AppController={
       gender:UIManager.q('#partnerGender')?.value||'',
       birthPlace:UIManager.q('#partnerBirthPlace')?.value.trim()||''
     };
+    const partnerCccd=UIManager.q('#partnerCccd')?.value||'',partnerPhone=UIManager.q('#partnerPhone')?.value||'';
+    partner.identityKey=await Identity.fingerprint({cccd:partnerCccd,phone:partnerPhone,fullName:partner.fullName,birthDate:partner.birthDate});
+    partner.identitySource=Identity.sourceLabel(partnerCccd,partnerPhone);
     const relationType=UIManager.q('#relationshipType')?.value||'general';
     if(!partner.fullName||!partner.birthDate){UIManager.toast('Vui lòng nhập họ tên và ngày sinh của người muốn so sánh.');return}
     try{
@@ -1088,7 +1220,29 @@ const AppController={
   }
 };
 
-/* ===== app.js ===== */
+
+/* ===== services/service-worker-client.js ===== */
+function registerServiceWorker(){
+  const isWeb = location.protocol === 'http:' || location.protocol === 'https:';
+  if(!isWeb) return;
+
+  // Attach the PWA manifest only on web origins. file:// mode stays completely local.
+  if(!document.querySelector('link[rel="manifest"]')){
+    const link=document.createElement('link');
+    link.rel='manifest';
+    link.href='./manifest.webmanifest';
+    document.head.appendChild(link);
+  }
+
+  if(!('serviceWorker' in navigator) || !window.isSecureContext) return;
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('./sw.js').catch(err=>{
+      console.warn('[Huyen Cac] Service Worker registration skipped:',err.message);
+    });
+  },{once:true});
+}
+
+
 InteractionManager.init();
 AppController.init();
 registerServiceWorker();

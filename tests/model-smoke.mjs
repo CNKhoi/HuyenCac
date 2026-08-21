@@ -5,6 +5,7 @@ import { AstrologyCalculator } from '../assets/js/models/astrology-calculator.js
 import { TarotEngine } from '../assets/js/models/tarot-engine.js';
 import { CompatibilityCalculator } from '../assets/js/models/compatibility-calculator.js';
 import { DateScorer } from '../assets/js/models/date-scorer.js';
+import { Identity } from '../assets/js/utils/identity.js';
 
 const profile={fullName:'Nguyễn Văn A',birthDate:'2001-11-18',birthTime:'08:30',gender:'male',birthPlace:'Bình Thuận'};
 
@@ -16,6 +17,17 @@ assert.equal(numerology.synthesis.axes.length,3);
 assert.equal(numerology.synthesis.insights.length,3);
 assert.ok(numerology.synthesis.axes.every(x=>x.score>=0&&x.score<=100));
 assert.match(numerology.reading,/BỨC TRANH CHUNG/);
+assert.equal(numerology.age,24);
+assert.ok(numerology.finance?.doNow&&numerology.finance?.avoid);
+assert.ok(numerology.future?.should&&numerology.future?.avoid);
+assert.ok(numerology.love?.need&&numerology.love?.greenFlags.length===3);
+
+
+// Optional identity discriminator: raw values are converted to a fingerprint only
+const idA=await Identity.fingerprint({cccd:'123456789012',phone:'0901234567',fullName:profile.fullName,birthDate:profile.birthDate});
+const idB=await Identity.fingerprint({cccd:'123456789013',phone:'0901234567',fullName:profile.fullName,birthDate:profile.birthDate});
+assert.ok(idA&&idB&&idA!==idB);
+assert.equal(Identity.sourceLabel('123456789012','0901234567'),'CCCD + số điện thoại');
 
 // Lunar / Can Chi
 const lunar=LunarConverter.fromDate(new Date('2026-08-17T12:00:00'));
@@ -60,4 +72,4 @@ assert.ok(typeof dates.separation==='string');
 assert.ok(dates.list.every(x=>x.factors.length===5));
 assert.match(dates.expertAnalysis,/ĐỘ ỔN ĐỊNH CỦA KẾT QUẢ/);
 
-console.log('✓ v5.7 human-reading + compact-dates smoke tests passed');
+console.log('✓ v5.9 easy-read + private-identity smoke tests passed');

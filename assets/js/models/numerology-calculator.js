@@ -59,6 +59,72 @@ export class NumerologyCalculator{
     return {axes,insights,familyCounts,dominantFamily:dominant[0],dominantCount:dominant[1]};
   }
 
+
+
+  static ageOn(ds,date=new Date()){
+    const [y,m,d]=ds.split('-').map(Number);let age=date.getFullYear()-y;
+    const before=date.getMonth()+1<m||(date.getMonth()+1===m&&date.getDate()<d);if(before)age--;
+    return Math.max(0,age);
+  }
+
+  static ageStage(age){
+    if(age<18)return {key:'learning',label:'Giai đoạn xây nền',range:'Dưới 18',focus:'học kỹ năng, tạo thói quen và hiểu giá trị của tiền/cảm xúc trước khi gánh quyết định dài hạn'};
+    if(age<=24)return {key:'explore',label:'Giai đoạn thử nghiệm có kiểm soát',range:'18–24',focus:'tích lũy kỹ năng, trải nghiệm có giới hạn và xây nền tự lập'};
+    if(age<=34)return {key:'build',label:'Giai đoạn xây nền dài hạn',range:'25–34',focus:'ổn định năng lực kiếm sống, chọn hướng dài hạn và xây các cam kết có chất lượng'};
+    if(age<=44)return {key:'expand',label:'Giai đoạn mở rộng & tái cân bằng',range:'35–44',focus:'cân bằng tăng trưởng với sức bền, gia đình, trách nhiệm và chất lượng lựa chọn'};
+    if(age<=54)return {key:'optimize',label:'Giai đoạn tối ưu & củng cố',range:'45–54',focus:'lọc bớt thứ kém hiệu quả, bảo toàn thành quả và ưu tiên chiều sâu hơn số lượng'};
+    return {key:'preserve',label:'Giai đoạn bảo toàn & truyền lại giá trị',range:'55+',focus:'duy trì sự chủ động, bảo toàn nguồn lực và dành năng lượng cho điều có ý nghĩa lâu dài'};
+  }
+
+  static financeGuidance(values,age,now=new Date()){
+    const family=this.family(values.life),exprFamily=this.family(values.expression),py=values.personalYear,stage=this.ageStage(age);
+    const patterns={
+      'Chủ động':{strength:'khả năng quyết nhanh, nhìn nguồn lực theo mục tiêu và chủ động tạo cơ hội',risk:'dễ quá tự tin, tập trung quá nhiều vào một lựa chọn hoặc quyết định nhanh khi chưa đủ dữ kiện'},
+      'Kết nối':{strength:'khả năng thương lượng, duy trì quan hệ và tạo giá trị qua hợp tác',risk:'dễ chi tiêu theo cảm xúc, khó nói “không” hoặc nhường quá nhiều trong chuyện tiền bạc'},
+      'Biểu đạt':{strength:'khả năng tìm cơ hội qua giao tiếp, sáng tạo và thích nghi nhanh',risk:'dễ phân tán nguồn thu, mua theo hứng hoặc chạy theo cơ hội mới trước khi tối ưu cái đang có'},
+      'Cấu trúc':{strength:'khả năng lập kế hoạch, giữ kỷ luật và xây nền tài chính đều đặn',risk:'dễ quá thận trọng, bỏ lỡ cơ hội hợp lý hoặc giữ một mô hình cũ quá lâu chỉ vì nó quen thuộc'},
+      'Chiêm nghiệm':{strength:'khả năng nghiên cứu, soi rủi ro và không dễ bị cuốn theo đám đông',risk:'dễ chậm quyết định vì muốn đủ chắc chắn hoặc bỏ qua cơ hội vì phân tích quá lâu'},
+      'Nhân văn':{strength:'khả năng nhìn tiền như công cụ phục vụ giá trị lớn hơn và tạo tác động',risk:'dễ cho đi quá tay, định giá thấp công sức hoặc đặt lý tưởng cao hơn giới hạn nguồn lực'},
+      'Trực giác':{strength:'khả năng nhận ra mô-típ, xu hướng và cơ hội khác thường',risk:'dễ đánh đồng trực giác với bằng chứng, đặc biệt khi quyết định có yếu tố đầu cơ'},
+      'Kiến tạo':{strength:'khả năng nghĩ dài hạn, xây hệ thống và biến mục tiêu lớn thành cấu trúc',risk:'dễ mở rộng quá nhanh, ôm dự án lớn hoặc dùng đòn bẩy trước khi nền dòng tiền đủ chắc'},
+      'Phụng sự':{strength:'khả năng tạo giá trị bền nhờ trách nhiệm, chất lượng dịch vụ và uy tín',risk:'dễ làm nhiều hơn mức được trả hoặc đặt nhu cầu người khác lên trên an toàn tài chính của mình'}
+    };
+    const p=patterns[family]||patterns['Biểu đạt'];
+    const ageAdvice={
+      learning:['Tập thói quen ghi chép tiền vào/ra và hiểu khác biệt giữa nhu cầu với ham muốn.','Không vay/nợ hoặc mua sắm theo áp lực bạn bè; ưu tiên học kỹ năng trước khi tìm “cách kiếm tiền nhanh”.'],
+      explore:['Xây quỹ dự phòng nhỏ, đầu tư vào kỹ năng tạo thu nhập và tập đều một thói quen tiết kiệm.','Tránh nợ tiêu dùng, đầu cơ theo FOMO và dồn phần lớn tiền vào một cơ hội chưa hiểu rõ.'],
+      build:['Ưu tiên quỹ dự phòng, bảo hiểm phù hợp, tăng năng lực kiếm tiền và tích lũy đều theo kế hoạch.','Tránh nâng mức sống nhanh hơn thu nhập bền vững hoặc gánh khoản vay dài hạn chỉ vì áp lực so sánh.'],
+      expand:['Đa dạng hóa nguồn lực, rà soát rủi ro gia đình/công việc và dành tỷ lệ rõ cho mục tiêu dài hạn.','Tránh dùng đòn bẩy quá mức, mở rộng nhiều dự án cùng lúc hoặc xem thu nhập hiện tại là chắc chắn vĩnh viễn.'],
+      optimize:['Củng cố tài sản, giảm khoản kém hiệu quả, kiểm tra kế hoạch nghỉ hưu và tính thanh khoản.','Tránh giữ khoản đầu tư chỉ vì “đã bỏ nhiều tiền” hoặc chấp nhận rủi ro cao để bù cho thời gian đã qua.'],
+      preserve:['Ưu tiên bảo toàn vốn, thanh khoản, chống gian lận và kế hoạch chuyển giao/tài sản rõ ràng.','Tránh sản phẩm phức tạp không hiểu rõ, cam kết lợi nhuận cao và quyết định tài chính do người khác gây áp lực.']
+    }[stage.key];
+    const cycleTip={1:'Năm 1 hợp để rà soát cấu trúc thu nhập và bắt đầu một thói quen tài chính mới ở quy mô nhỏ.',2:'Năm 2 nhấn mạnh hợp tác: tiền bạc nên có quy ước rõ khi liên quan người khác.',3:'Năm 3 dễ có nhiều ý tưởng và chi tiêu trải nghiệm; cần một ngân sách vui chơi rõ ràng.',4:'Năm 4 hợp với kỷ luật, trả nợ, tích lũy và tối ưu quy trình tài chính.',5:'Năm 5 dễ có biến động/thử nghiệm; nên tăng quỹ đệm trước khi mở rộng rủi ro.',6:'Năm 6 thường kéo trách nhiệm gia đình/cam kết lên cao; nên phân biệt hỗ trợ hợp lý và gánh thay.',7:'Năm 7 hợp với rà soát, học sâu và tránh quyết định đầu tư vì sốt ruột.',8:'Năm 8 phù hợp đặt mục tiêu tài chính đo được, nhưng càng cần kỷ luật rủi ro và minh bạch số liệu.',9:'Năm 9 hợp để dọn khoản kém hiệu quả, khép nghĩa vụ cũ và tránh mở cam kết dài hạn chỉ vì cảm xúc.'}[py];
+    return {title:`Tài chính ở tuổi ${age}`,stage,profile:`Trục ${values.life} (${family}) kết hợp Biểu đạt ${values.expression} (${exprFamily}) cho thấy bạn có thể phát huy tốt ở ${p.strength}.`,risk:p.risk,doNow:ageAdvice[0],avoid:ageAdvice[1],cycleTip,disclaimer:'Đây là góc nhìn hành vi và quản trị rủi ro, không phải dự báo giàu/nghèo hay khuyến nghị đầu tư cá nhân.'};
+  }
+
+  static futureGuidance(values,age,now=new Date()){
+    const stage=this.ageStage(age),py=values.personalYear,life=this.info(values.life),maturity=this.info(values.maturity);
+    const cycle={
+      1:{do:'chọn một hướng mới đủ nhỏ để bắt đầu ngay và đặt mốc kiểm tra sau 30–90 ngày',avoid:'mở quá nhiều dự án cùng lúc hoặc đổi hướng chỉ vì cảm giác muốn làm mới'},
+      2:{do:'đầu tư vào quan hệ, kỹ năng lắng nghe và những việc cần phối hợp bền bỉ',avoid:'ép tiến độ khi điều kiện chưa chín hoặc im lặng quá lâu để giữ hòa khí'},
+      3:{do:'đưa ý tưởng ra ngoài, thử sản phẩm/nội dung/kỹ năng giao tiếp và đo phản hồi thực tế',avoid:'chạy theo cảm hứng mà thiếu lịch hoàn thành'},
+      4:{do:'xây quy trình, chuẩn hóa thói quen và hoàn thiện nền tảng đang còn lỏng',avoid:'cứng nhắc với kế hoạch khi dữ kiện thực tế đã thay đổi'},
+      5:{do:'thử nghiệm có giới hạn, học kỹ năng mới và chủ động tạo phương án dự phòng',avoid:'đánh đồng thay đổi với tiến bộ hoặc bỏ cái đang tốt chỉ vì chán'},
+      6:{do:'làm rõ cam kết, trách nhiệm và cân bằng giữa mình với gia đình/đội nhóm',avoid:'ôm trách nhiệm của người khác đến mức cạn năng lượng'},
+      7:{do:'học sâu, rà soát hướng đi và dành thời gian cho công việc cần tập trung chất lượng cao',avoid:'cô lập hoặc trì hoãn vô hạn vì chưa cảm thấy “đủ chắc”'},
+      8:{do:'đặt mục tiêu kết quả đo được, quản lý nguồn lực và học cách đàm phán giá trị của mình',avoid:'để áp lực thành tích khiến quyết định ngắn hạn lấn át rủi ro dài hạn'},
+      9:{do:'hoàn tất việc dang dở, đóng vòng cũ và giải phóng nguồn lực cho chu kỳ kế tiếp',avoid:'níu giữ một hướng đã không còn hiệu quả chỉ vì tiếc công sức đã bỏ ra'}
+    }[py];
+    return {age,stage,headline:`${stage.label} • Năm cá nhân ${py}`,context:`Ở tuổi ${age}, ưu tiên phát triển hợp lý thường là ${stage.focus}. Trục Chủ đạo ${values.life} (${life[0]}) cho thấy cách bạn thường khởi động vấn đề, còn Số trưởng thành ${values.maturity} (${maturity[0]}) gợi hướng năng lực cần được tích hợp nhiều hơn khi tuổi và trách nhiệm tăng lên.`,should:cycle.do,avoid:cycle.avoid,checkpoint:`Trong 6–12 tháng tới, hãy chọn tối đa 2 mục tiêu có thể đo được. Mỗi quý tự hỏi: “việc này đang tạo năng lực/tài sản/quan hệ tốt hơn, hay chỉ đang làm tôi bận hơn?”`,disclaimer:'Phần “tương lai” không dự đoán sự kiện sẽ xảy ra. Nó chỉ chuyển độ tuổi + chu kỳ hiện tại thành các ưu tiên thực hành để bạn tự quyết định.'};
+  }
+
+  static loveGuidance(values,age,now=new Date()){
+    const soul=this.info(values.soul),personality=this.info(values.personality),life=this.info(values.life),py=values.personalYear,stage=this.ageStage(age);
+    const ageFocus=age<25?'ưu tiên hiểu ranh giới, nhịp riêng và kiểu quan tâm khiến bạn cảm thấy được tôn trọng':age<35?'ưu tiên phân biệt hấp dẫn ban đầu với sự tương thích về giá trị, trách nhiệm và kế hoạch sống':age<45?'ưu tiên khả năng cùng gánh trách nhiệm, sửa chữa sau xung đột và giữ không gian phát triển cá nhân':age<55?'ưu tiên chất lượng đồng hành, sự trung thực, tôn trọng nhịp sống và cách hai người chăm sóc mối quan hệ qua thời gian':'ưu tiên sự bình an, tin cậy, quyền tự chủ và khả năng đồng hành thực tế hơn là hình ảnh lý tưởng về một mối quan hệ';
+    const cycleHint=[2,6].includes(py)?'Chu kỳ hiện tại đặt nhiều chú ý vào hợp tác/cam kết; đây là lúc phù hợp để nói rõ nhu cầu và kỳ vọng thay vì chỉ đoán ý nhau.':py===5?'Chu kỳ hiện tại có nhiều năng lượng thay đổi; nếu tình cảm biến động, cần phân biệt nhu cầu tự do lành mạnh với phản ứng bốc đồng.':py===7?'Chu kỳ hiện tại thiên về nhìn lại; khoảng riêng có thể hữu ích nếu được giao tiếp rõ, nhưng im lặng kéo dài dễ biến thành xa cách.':py===9?'Chu kỳ hiện tại hợp với việc khép những mô-típ cũ; thay vì cố giữ mọi thứ, hãy xem điều gì cần được sửa, tha thứ hoặc kết thúc có trách nhiệm.':'Chu kỳ hiện tại không phải “năm tình duyên” cố định; hãy dùng nó như nhịp nền để điều chỉnh cách giao tiếp và mức cam kết.';
+    return {title:'Đường tình duyên & cách bạn gắn kết',need:`Linh hồn ${values.soul} (${soul[0]}) gợi nhu cầu bên trong nghiêng về ${soul[1]}. Trong tình cảm, điều quan trọng là biến nhu cầu này thành câu nói/hành vi cụ thể thay vì chờ người kia tự hiểu.`,outer:`Nhân cách ${values.personality} (${personality[0]}) là lớp người khác dễ nhìn thấy. Nếu lớp này khác với điều bạn cần bên trong, bạn có thể tạo cảm giác mạnh mẽ/bình thản hơn thực tế và khiến đối phương đọc sai tín hiệu.`,pattern:`Chủ đạo ${values.life} (${life[0]}) cho thấy mô-típ dài hạn của bạn là ${life[1]}. Ở tuổi ${age}, ${ageFocus}.`,cycleHint,greenFlags:['tôn trọng ranh giới và quyền nói “không”','nói được chuyện tiền bạc, gia đình, thời gian và cam kết mà không né tránh','sau xung đột có hành động sửa chữa chứ không chỉ xin lỗi bằng lời'],redFlags:['buộc bạn phải thu nhỏ bản thân để giữ quan hệ','kiểm soát, gây sợ hãi hoặc làm bạn mất quyền tự quyết','lời nói và hành vi liên tục không nhất quán trong thời gian dài'],disclaimer:'Không có con số nào xác định bạn “sẽ yêu ai” hay “khi nào kết hôn”. Chất lượng tình duyên phụ thuộc vào lựa chọn, kỹ năng giao tiếp, ranh giới, sự an toàn và cách hai người cùng trưởng thành.'};
+  }
+
   static expertReading(values,now){
     const li=this.info(values.life),ei=this.info(values.expression),si=this.info(values.soul),pi=this.info(values.personality),mi=this.info(values.maturity);
     const le=this.alignment(values.life,values.expression),io=this.alignment(values.soul,values.personality),cycleRel=this.alignment(values.life,values.personalYear);
@@ -118,6 +184,7 @@ export class NumerologyCalculator{
     const cycles=[{value:values.personalYear,label:'Năm cá nhân',text:MysticalData.CYCLE_TEXT[values.personalYear],meta:String(now.getFullYear())},{value:pm,label:'Tháng cá nhân',text:MysticalData.CYCLE_TEXT[pm],meta:`Tháng ${now.getMonth()+1}`},{value:pd,label:'Ngày cá nhân',text:MysticalData.CYCLE_TEXT[pd],meta:Format.vn(now,{day:'2-digit',month:'2-digit'})}];
     const clean=this.stripName(name),vowels=[...clean].filter(c=>'AEIOUY'.includes(c)).join(''),cons=[...clean].filter(c=>!'AEIOUY'.includes(c)).join('');
     const formulas=[['Số chủ đạo',`digits(${ds}) → tổng ${this.sumDigits(ds)} → ${values.life}`],['Số biểu đạt',`${clean||'—'} → Pythagoras 1–9 → ${values.expression}`],['Số linh hồn',`${vowels||'—'} → nguyên âm → ${values.soul}`],['Số nhân cách',`${cons||'—'} → phụ âm → ${values.personality}`],['Số thái độ',`${Number(ds.split('-')[1])} + ${Number(ds.split('-')[2])} → ${values.attitude}`],['Số trưởng thành',`${values.life} + ${values.expression} → ${values.maturity}`]];
-    return {values,metrics,reading,cycles,formulas,synthesis:this.synthesis(values),genderReading:this.genderInsight(profile.gender,values.life,values.expression,values.soul,values.personality)};
+    const age=this.ageOn(ds,now),ageStage=this.ageStage(age),finance=this.financeGuidance(values,age,now),future=this.futureGuidance(values,age,now),love=this.loveGuidance(values,age,now);
+    return {values,metrics,reading,cycles,formulas,synthesis:this.synthesis(values),genderReading:this.genderInsight(profile.gender,values.life,values.expression,values.soul,values.personality),age,ageStage,finance,future,love};
   }
 }

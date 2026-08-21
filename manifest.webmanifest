@@ -1,5 +1,5 @@
 {
-  "name": "Huyền Các v5.5 — Compatibility & Expert Insight",
+  "name": "Huyền Các v5.9 — Dễ hiểu trước, chi tiết sau",
   "short_name": "Huyền Các",
   "start_url": "./",
   "scope": "./",
@@ -7,5 +7,5 @@
   "background_color": "#090d14",
   "theme_color": "#0d1320",
   "lang": "vi",
-  "description": "Tarot, Thần số học, Tử vi, Xem độ hợp và Xem ngày — phân tích sâu, giao diện 3D và kiến trúc module."
+  "description": "Tarot, Xem bói, Tử vi, Độ hợp và Xem ngày theo nguyên tắc: kết luận dễ hiểu trước, hành động tiếp theo sau, thuật ngữ/cách tính chỉ mở khi cần."
 }

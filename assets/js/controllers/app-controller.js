@@ -4,6 +4,7 @@ import { TarotEngine } from '../models/tarot-engine.js';
 import { CompatibilityCalculator } from '../models/compatibility-calculator.js';
 import { DateScorer } from '../models/date-scorer.js';
 import { Format } from '../utils/format.js';
+import { Identity } from '../utils/identity.js';
 import { UIManager } from '../views/ui-manager.js';
 
 export const AppController={
@@ -54,15 +55,23 @@ export const AppController={
       if(e.target.id==='tarotTopic'&&UIManager.q('#tarotMode')?.value==='preset')UIManager.renderTarotPreset();
     });
 
-    document.addEventListener('submit',e=>{
+    document.addEventListener('submit',async e=>{
       if(e.target.id!=='profileForm')return;
       e.preventDefault();
+      const previous=AppState.get().profile||{};
+      const fullName=UIManager.q('#fullName').value.trim(),birthDate=UIManager.q('#birthDate').value;
+      const cccd=UIManager.q('#cccd')?.value||'',phone=UIManager.q('#phone')?.value||'';
+      const hasIdentityInput=Boolean(Identity.digits(cccd)||Identity.digits(phone));
+      const identityKey=hasIdentityInput?await Identity.fingerprint({cccd,phone,fullName,birthDate}):(previous.identityKey||'');
+      const identitySource=hasIdentityInput?Identity.sourceLabel(cccd,phone):(previous.identitySource||'');
       const profile={
-        fullName:UIManager.q('#fullName').value.trim(),
-        birthDate:UIManager.q('#birthDate').value,
+        fullName,
+        birthDate,
         birthTime:UIManager.q('#birthTime').value,
         gender:UIManager.q('#gender').value,
-        birthPlace:UIManager.q('#birthPlace').value.trim()
+        birthPlace:UIManager.q('#birthPlace').value.trim(),
+        identityKey,
+        identitySource
       };
       StorageModel.save(profile);
       AppState.patch({profile,tarot:null,compatibility:null,dates:null});
@@ -97,7 +106,7 @@ export const AppController={
     }catch(err){UIManager.toast(err.message)}
   },
 
-  analyzeCompatibility(){
+  async analyzeCompatibility(){
     const profile=this.requireProfile();if(!profile)return;
     const partner={
       fullName:UIManager.q('#partnerName')?.value.trim()||'',
@@ -106,6 +115,9 @@ export const AppController={
       gender:UIManager.q('#partnerGender')?.value||'',
       birthPlace:UIManager.q('#partnerBirthPlace')?.value.trim()||''
     };
+    const partnerCccd=UIManager.q('#partnerCccd')?.value||'',partnerPhone=UIManager.q('#partnerPhone')?.value||'';
+    partner.identityKey=await Identity.fingerprint({cccd:partnerCccd,phone:partnerPhone,fullName:partner.fullName,birthDate:partner.birthDate});
+    partner.identitySource=Identity.sourceLabel(partnerCccd,partnerPhone);
     const relationType=UIManager.q('#relationshipType')?.value||'general';
     if(!partner.fullName||!partner.birthDate){UIManager.toast('Vui lòng nhập họ tên và ngày sinh của người muốn so sánh.');return}
     try{
